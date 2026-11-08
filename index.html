@@ -3,59 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carelink 急救 · 下载体验</title>
+<title>Carelink 大湾区急救 · 下载</title>
 <style>
-  :root { --blue:#2563eb; --red:#dc2626; }
+  :root { --blue:#2563eb; --red:#dc2626; --ink:#111827; }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;
          background:linear-gradient(170deg,#e8f0fe,#f7f9fc 45%); min-height:100vh;
-         padding:28px 20px 40px; color:#111827; }
+         padding:28px 20px 40px; color:var(--ink); }
   .wrap { max-width:460px; margin:0 auto; }
   .logo { width:72px; height:72px; border-radius:20px; margin:0 auto 18px;
           background:linear-gradient(135deg,#3b82f6,#2563eb); display:flex;
           align-items:center; justify-content:center; font-size:34px;
           box-shadow:0 12px 28px rgba(37,99,235,.32); }
   h1 { font-size:24px; text-align:center; margin-bottom:6px; }
-  .sub { text-align:center; color:#6b7280; font-size:13px; margin-bottom:26px; line-height:1.6; }
+  .sub { text-align:center; color:#6b7280; font-size:13px; margin-bottom:22px; line-height:1.6; }
+  .ver { text-align:center; font-size:11.5px; color:#9ca3af; margin-bottom:18px; }
   .btn { display:block; text-align:center; text-decoration:none; padding:17px;
          border-radius:15px; font-size:17px; font-weight:700; margin-bottom:12px;
          background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff;
          box-shadow:0 10px 24px rgba(37,99,235,.3); }
   .btn:active { transform:scale(.98); }
-  .btn.ghost { background:#fff; color:var(--blue); box-shadow:0 2px 10px rgba(0,0,0,.06); }
-  .card { background:#fff; border-radius:16px; padding:18px; margin-top:18px;
+  .btn.ios { background:linear-gradient(135deg,#0ea5e9,#0284c7); box-shadow:0 10px 24px rgba(2,132,199,.28); }
+  .card { background:#fff; border-radius:16px; padding:18px; margin-top:16px;
           box-shadow:0 2px 12px rgba(20,40,80,.05); }
   .card h3 { font-size:15px; margin-bottom:10px; }
   .card ol { padding-left:20px; font-size:13.5px; color:#4b5563; line-height:2; }
   .warn { background:#fef2f2; border-left:3px solid var(--red); }
   .warn p { font-size:13px; color:#7f1d1d; line-height:1.7; }
-  .foot { text-align:center; color:#9ca3af; font-size:12px; margin-top:26px; line-height:1.8; }
+  .foot { text-align:center; color:#9ca3af; font-size:12px; margin-top:24px; line-height:1.8; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logo">🆘</div>
   <h1>Carelink 大湾区急救</h1>
-  <div class="sub">一键 SOS · 监护人通知 · 语音求助<br>仅支持 Android 7.0 及以上</div>
+  <div class="sub">一键 SOS · 短信通知监护人 · 自动拨号 · 语音求助</div>
+  <div class="ver">最新版本 · <span id="ver">2026-11-08</span> · 每次更新直接覆盖安装</div>
 
-  <a class="btn" href="carelink.apk" download>下载 Android 安装包（约 10 MB）</a>
-  <a class="btn ghost" href="app.html">在浏览器中体验（iOS 可用）</a>
+  <a class="btn" id="apk" href="carelink.apk">Android 下载安装包（约 10 MB）</a>
+  <a class="btn ios" id="pwa" href="app.html">iPhone / iPad 打开网页版</a>
 
   <div class="card">
-    <h3>安装三步</h3>
+    <h3>Android 安装三步</h3>
     <ol>
-      <li>点上面的按钮下载 APK</li>
+      <li>点上面蓝色按钮下载 APK</li>
       <li>打开文件，允许「安装未知来源应用」</li>
-      <li>安装完成后打开，授予定位 / 电话 / 短信 / 通知权限</li>
+      <li>安装后打开，按提示允许 电话 / 短信 / 定位 / 通知</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>iPhone 使用方法</h3>
+    <ol>
+      <li>点上面蓝色按钮，用 Safari 打开</li>
+      <li>点底部「分享」→「添加到主屏幕」</li>
+      <li>iOS 版仅支持界面体验与查看，拨号需手动确认</li>
     </ol>
   </div>
 
   <div class="card">
     <h3>首次使用建议</h3>
     <ol>
-      <li>在「我的 → 急救档案」填写姓名、血型、过敏史、基础病</li>
+      <li>「我的 → 急救档案」填写姓名、血型、过敏史、基础病</li>
       <li>填写监护人手机号与急救电话</li>
-      <li>到「设置 → 电池」里把本应用设为「不受限制」</li>
+      <li>系统设置里把本应用设为「电池不受限制」</li>
     </ol>
   </div>
 
@@ -68,5 +79,17 @@
     本页面仅用于比赛演示
   </div>
 </div>
+
+<script>
+  // 每次加载加上时间戳，避免手机浏览器缓存旧包
+  (function () {
+    var v = '20261108';
+    var apk = document.getElementById('apk');
+    var pwa = document.getElementById('pwa');
+    apk.href = 'carelink.apk?v=' + v;
+    pwa.href = 'app.html?v=' + v;
+    document.getElementById('ver').textContent = v.slice(0,4) + '-' + v.slice(4,6) + '-' + v.slice(6,8);
+  })();
+</script>
 </body>
 </html>
