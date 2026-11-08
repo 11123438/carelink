@@ -974,6 +974,7 @@
 
   function selectLanguage(lang) {
     state.language = lang;
+    try { localStorage.setItem('carelink.lang', lang); } catch (e) {}
     setTimeout(() => { showScreen('screenRole'); translateDOM(document.body); }, 200);
   }
 
@@ -1972,6 +1973,7 @@
   /** 我的页面切换语言：立即重渲染 + 翻译当前页 */
   function setProfileLanguage(lang) {
     state.language = lang;
+    try { localStorage.setItem('carelink.lang', lang); } catch (e) {}
     switchTab(state.currentTab);
     showToast(lang === 'zh' ? '已切换为简体中文'
       : lang === 'en' ? 'Switched to English'
@@ -2143,6 +2145,10 @@
   }
 
   (function init() {
+    try {
+      var savedLang = localStorage.getItem('carelink.lang');
+      if (savedLang) state.language = savedLang;
+    } catch (e) {}
     loadEmergencyProfile();
     showScreen('screenLanguage');
     restoreSOS();
@@ -2152,6 +2158,7 @@
   /* 供 carelink-native.js 读取当前档案与 SOS 状态（只读） */
   /* 供 carelink-native.js 取用当前语言的动态文案 */
   window.__carelinkText = {
+    lang: function () { return state.language; },
     speech: function () { return sosSpeechText(); },
     loop: function () { return sosLoopText(); },
     sms: function () { return sosSmsText(); }
