@@ -150,11 +150,14 @@
   global.onSOSPhaseEnter = function (idx) {
     if (!CarelinkNative.available()) return;
     var p = profile();
+    var T = global.__carelinkText || null;
+
     if (idx === 1) {
       // 短信通知监护人：不需要配对，只要老人端填了手机号
       var phone = p.guardianPhone || p.contactPhone || '';
       if (phone) {
-        CarelinkNative.sendSosSms(phone, sosSmsText(p)).then(function (r) {
+        var smsBody = T && T.sms ? T.sms() : sosSmsText(p);
+        CarelinkNative.sendSosSms(phone, smsBody).then(function (r) {
           if (r && r.sent && global.showToast) global.showToast('已发送求助短信给 ' + phone);
         }).catch(function (err) {
           console.warn('[SMS] 发送失败', err);
@@ -179,8 +182,10 @@
         }
       });
     } else if (idx === 3) {
-      CarelinkNative.speakPatientInfo(speechText(p));
-      CarelinkNative.startMaxVolumeLoop(loopText(p), 6000);
+      var speakBody = (T && T.speech) ? T.speech() : speechText(p);
+      var loopBody = (T && T.loop) ? T.loop() : loopText(p);
+      CarelinkNative.speakPatientInfo(speakBody);
+      CarelinkNative.startMaxVolumeLoop(loopBody, 6000);
     }
   };
 
