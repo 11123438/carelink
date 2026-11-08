@@ -705,6 +705,25 @@
         <textarea class="form-textarea" id="epNote" rows="2" placeholder="如：独居、听力不佳、行动不便等"></textarea>
       </div>
 
+      <div class="card">
+        <div class="card-title">英文播报（可选）</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">
+          界面切到 English / Português 时，播报优先用这里的内容；留空会自动剔除中文。
+        </div>
+        <div class="form-row">
+          <div class="form-label">Name (EN)</div>
+          <input class="form-input" id="epNameEn" type="text" placeholder="Li Jianguo" maxlength="40">
+        </div>
+        <div class="form-row">
+          <div class="form-label">Allergies (EN)</div>
+          <input class="form-input" id="epAllergyEn" type="text" placeholder="Penicillin (rash)" maxlength="60">
+        </div>
+        <div class="form-row">
+          <div class="form-label">Conditions (EN)</div>
+          <input class="form-input" id="epHistoryEn" type="text" placeholder="Hypertension, coronary heart disease" maxlength="80">
+        </div>
+      </div>
+
     </main>
 
     <div class="ep-footer">
@@ -1501,6 +1520,9 @@
   const EP_HISTORY_OPTIONS = ['高血压', '糖尿病', '冠心病', '中风', '哮喘', '慢阻肺', '肾病', '肿瘤', '认知障碍', '无'];
   const EP_DEFAULT = {
     name: '李建国',
+    nameEn: 'Li Jianguo',
+    allergyEn: 'Penicillin (rash)',
+    historyEn: 'Hypertension, coronary heart disease',
     age: '78',
     blood: 'O+',
     idType: '港澳居民来往内地通行证 · 内地医保',
@@ -1557,6 +1579,9 @@
   function openEmergencyProfile() {
     loadEmergencyProfile();
     el('epName').value = emergencyProfile.name || '';
+    el('epNameEn').value = emergencyProfile.nameEn || '';
+    el('epAllergyEn').value = emergencyProfile.allergyEn || '';
+    el('epHistoryEn').value = emergencyProfile.historyEn || '';
     el('epAge').value = emergencyProfile.age || '';
     el('epBlood').value = emergencyProfile.blood || '未知';
     el('epIdType').value = emergencyProfile.idType || '';
@@ -1588,6 +1613,9 @@
     }
     emergencyProfile = {
       name: name,
+      nameEn: el('epNameEn').value.trim(),
+      allergyEn: el('epAllergyEn').value.trim(),
+      historyEn: el('epHistoryEn').value.trim(),
       age: el('epAge').value.trim(),
       blood: el('epBlood').value,
       idType: el('epIdType').value.trim(),
@@ -1761,6 +1789,22 @@
     });
   }
 
+  /** 去掉中文（保证英文播报里不夹中文） */
+  function stripCJK(v) {
+    return String(v == null ? '' : v)
+      .replace(/[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /** 英文/葡语时优先用英文字段，否则剔除中文；中文/粤语时按词表翻译 */
+  function pickLang(zhValue, enValue, fallback) {
+    if (state.language === 'en' || state.language === 'pt') {
+      if (enValue && stripCJK(enValue)) return enValue;
+      return stripCJK(zhValue) || fallback;
+    }
+    return tr(zhValue || fallback);
+  }
   function sosDisplayValues() {
     const p = emergencyProfile;
     const t = st();
@@ -1769,11 +1813,11 @@
       ? p.history.join(state.language === 'zh' || state.language === 'yue' ? '、' : ', ')
       : t.none;
     return {
-      name: tr(p.name || t.elder),
+      name: pickLang(p.name || t.elder, p.nameEn, t.elder),
       age: p.age || t.unknown,
       blood: (p.blood && p.blood !== '未知') ? p.blood : t.unknown,
-      allergy: tr((p.drugAllergy && p.drugAllergy !== '无') ? p.drugAllergy : t.none),
-      history: tr(history)
+      allergy: pickLang((p.drugAllergy && p.drugAllergy !== '无') ? p.drugAllergy : t.none, p.allergyEn, t.none),
+      history: pickLang(history, p.historyEn, t.none)
     };
   }
 
