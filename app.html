@@ -679,7 +679,8 @@
         <div class="form-row">
           <div class="form-label">急救电话</div>
           <input class="form-input" id="epEmergencyPhone" type="tel" inputmode="tel" placeholder="内地 120 / 澳门 999 / 香港 999" maxlength="20">
-          <div class="form-hint">SOS 触发后「拨打急救电话」环节将模拟拨打此号码。</div>
+          <button class="btn btn-outline" style="margin-top:10px;padding:11px;" onclick="testDialEmergency()">测试拨号（验证号码是否正确）</button>
+          <div class="form-hint">SOS 触发后「拨打急救电话」环节会拨打此号码；建议先用上面的按钮试一次。</div>
         </div>
         <div class="form-row">
           <div class="form-label">监护人手机号</div>
@@ -773,6 +774,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="i18n-ui.js"></script>
+<script src="i18n-content.js"></script>
 <script>
   /* ============================================================
    * 协议内容（多语言）
@@ -916,6 +919,54 @@
   };
   const t = key => (i18n[state.language] && i18n[state.language][key]) || key;
 
+  /* ===== 界面文案翻译：把渲染出来的中文替换成当前语言 ===== */
+  function currentPhrases() {
+    if (state.language === 'zh') return null;
+    return (window.UI_PHRASES && window.UI_PHRASES[state.language]) || null;
+  }
+
+  /** 单条字符串翻译（用于 toast 等非 DOM 场景） */
+  function tr(text) {
+    const dict = currentPhrases();
+    if (!dict || !text) return text;
+    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+    let out = text;
+    for (let i = 0; i < keys.length; i++) {
+      if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
+    }
+    return out;
+  }
+  function translateDOM(root) {
+    const dict = currentPhrases();
+    if (!dict || !root) return;
+    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+
+    nodes.forEach(node => {
+      let text = node.nodeValue;
+      if (!text || !/[\u4e00-\u9fff]/.test(text)) return;
+      let out = text;
+      for (let i = 0; i < keys.length; i++) {
+        if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
+      }
+      if (out !== text) node.nodeValue = out;
+    });
+
+    root.querySelectorAll('[placeholder]').forEach(el => {
+      let ph = el.getAttribute('placeholder');
+      if (!ph) return;
+      let out = ph;
+      for (let i = 0; i < keys.length; i++) {
+        if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
+      }
+      if (out !== ph) el.setAttribute('placeholder', out);
+    });
+  }
+
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     el(id).classList.add('active');
@@ -923,7 +974,7 @@
 
   function selectLanguage(lang) {
     state.language = lang;
-    setTimeout(() => { showScreen('screenRole'); }, 200);
+    setTimeout(() => { showScreen('screenRole'); translateDOM(document.body); }, 200);
   }
 
   function selectRole(role) {
@@ -1003,6 +1054,7 @@
     state.currentTab = 0;
     switchTab(0);
     if (state.role === 'guardian') registerGuardianToken();
+    ensurePermissions(true);
     showToast('登录成功，欢迎使用 Carelink');
   }
 
@@ -1040,6 +1092,7 @@
     };
     appHeaderTitle.textContent = titles[state.role][idx] || '';
     appContent.innerHTML = getContent(state.role, idx);
+    translateDOM(el('screenApp'));
     appContent.scrollTop = 0;
   }
 
@@ -1115,6 +1168,24 @@
       </div>
       ` : ''}
       <div class="card">
+        <div class="card-title">🌐 语言 / Language</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
+          ${[
+            { id: 'zh', label: '简体中文' },
+            { id: 'en', label: 'English' },
+            { id: 'pt', label: 'Português' },
+            { id: 'yue', label: '粵語（繁體）' }
+          ].map(function (l) {
+            var on = state.language === l.id;
+            return '<div class="option-card ' + (on ? 'selected' : '') + '" '
+              + 'style="padding:10px 14px;margin:0;width:auto;flex:0 0 auto;" '
+              + 'onclick="setProfileLanguage(\'' + l.id + '\')">'
+              + '<span class="option-name" style="font-size:14px;">' + l.label + '</span>'
+              + '</div>';
+          }).join('')}
+        </div>
+      </div>
+      <div class="card">
         <div class="card-title">🔗 双机配对</div>
         ${state.role === 'elder' ? `
           <div class="card-desc">生成 6 位配对码，告诉家人。对方在监护人端输入后，您的 SOS 会同时推送到对方手机并全屏告警。</div>
@@ -1128,6 +1199,14 @@
             <button class="btn btn-primary" style="width:auto;padding:12px 18px;" onclick="bindElderByCode()">绑定</button>
           </div>
         `}
+      </div>
+      <div class="card">
+        <div class="card-title">🔐 权限自检</div>
+        <div class="card-desc" id="permStatusText">电话、短信、定位、通知——缺哪项补哪项，SOS 才能完整工作。</div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-outline" style="flex:1;padding:12px;" onclick="ensurePermissions(false)">检查并授权</button>
+          <button class="btn btn-primary" style="flex:1;padding:12px;" onclick="openSystemSettings()">系统设置</button>
+        </div>
       </div>
       <div class="card">
         <div class="list-item" onclick="showToast('打开个人资料设置')">
@@ -1491,6 +1570,7 @@
     el('epNote').value = emergencyProfile.note || '';
     buildHistoryChips();
     showScreen('screenEmergency');
+    translateDOM(el('screenEmergency'));
     el('screenEmergency').scrollTop = 0;
   }
 
@@ -1532,6 +1612,22 @@
     showToast(stored ? '✅ 急救档案已保存到本机' : '本机存储不可用，修改仅在本次会话生效');
   }
 
+  /** 档案页「测试拨号」：立刻拨打输入框里的号码，并提示实际拨出的是什么 */
+  function testDialEmergency() {
+    const v = (el('epEmergencyPhone').value || '').trim();
+    if (!v) { showToast('请先填写急救电话'); return; }
+    if (!window.CarelinkNative || !CarelinkNative.available()) {
+      showToast('浏览器环境无法拨号，请装 Android 包测试');
+      return;
+    }
+    CarelinkNative.makeEmergencyCall(v)
+      .then(function (r) {
+        showToast('正在拨打 ' + (r && r.number ? r.number : v));
+      })
+      .catch(function (e) {
+        showToast('拨号失败：' + (e && e.message ? e.message : e));
+      });
+  }
   function sosMedSummary() {
     const p = emergencyProfile;
     const parts = [];
@@ -1650,6 +1746,7 @@
       state.sos.phaseIndex = idx;
       if (navigator.vibrate) navigator.vibrate(idx === 4 ? [300, 200, 300] : 120);
       if (typeof window.onSOSPhaseEnter === 'function') window.onSOSPhaseEnter(idx);
+      setTimeout(function(){ translateDOM(el('sosOverlay')); }, 0);
     }
     renderSOS(idx, elapsed);
   }
@@ -1756,6 +1853,15 @@
     setTimeout(tryPushId, 2000);
   }
 
+  /** 我的页面切换语言：立即重渲染 + 翻译当前页 */
+  function setProfileLanguage(lang) {
+    state.language = lang;
+    switchTab(state.currentTab);
+    showToast(lang === 'zh' ? '已切换为简体中文'
+      : lang === 'en' ? 'Switched to English'
+      : lang === 'pt' ? 'Idioma alterado para Português'
+      : '已切換為粵語');
+  }
   /** 老人端：生成 6 位配对码 */
   function showPairCode() {
     if (!window.CarelinkCloud) { showToast('云端未就绪，检查网络'); return; }
@@ -1767,7 +1873,7 @@
         showToast('配对码已生成，10 分钟内有效');
       } else {
         box.textContent = '------';
-        showToast('生成失败，请检查网络后重试');
+        showToast('生成失败：当前网络访问不了 Firebase（内地需国际网络），短信与拨号不受影响');
       }
     });
   }
@@ -1787,13 +1893,60 @@
           expired: '配对码已过期',
           self: '不能绑定自己'
         };
-        showToast(map[res && res.reason] || '绑定失败，请重试');
+        showToast(map[res && res.reason] || '绑定失败：检查网络（内地需国际网络）');
       }
     });
   }
 
-  /** 用真实定位替换模拟坐标，并让原生反查到中文地址 */
-  async function refineSOSLocation() {
+  const PERM_LABELS = { phone: '电话', sms: '短信', location: '定位', notifications: '通知' };
+
+  /**
+   * 权限自检：缺什么补什么。
+   * 登录后、以及从系统设置返回时都会跑一遍；被「拒绝两次」的权限系统不再弹窗，
+   * 此时引导用户去系统设置手动开。
+   */
+  async function ensurePermissions(silent) {
+    if (!window.CarelinkNative || !CarelinkNative.available()) return;
+    try {
+      let st = await CarelinkNative.checkPermissions();
+      if (!st || st.mode === 'noop') return;
+
+      const missing = Object.keys(PERM_LABELS).filter(k => st[k] !== 'granted');
+      if (!missing.length) {
+        if (!silent) showToast('✅ 电话 / 短信 / 定位 / 通知 已全部开启');
+        return;
+      }
+
+      await CarelinkNative.requestMissingPermissions();
+      st = await CarelinkNative.checkPermissions();
+      const still = Object.keys(PERM_LABELS).filter(k => st[k] !== 'granted');
+      if (still.length) {
+        showToast('仍缺：' + still.map(k => PERM_LABELS[k]).join('、') +
+                  '。若系统不再弹窗，请到「我的 → 权限」里点系统设置手动开启');
+      } else if (!silent) {
+        showToast('✅ 权限已全部开启');
+      }
+    } catch (e) {
+      console.warn('[perm] 自检失败', e);
+    }
+  }
+
+  /** 从系统设置返回应用时自动再查一次 */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.loggedIn) {
+      ensurePermissions(true);
+    }
+  });
+
+  function openSystemSettings() {
+    if (window.CarelinkNative && CarelinkNative.available()) {
+      CarelinkNative.openAppSettings();
+    } else {
+      showToast('请到系统设置 → 应用 → Carelink → 权限 中开启');
+    }
+  }
+
+  /** 用真实定位替换模拟坐标，并让原生反查到中文地址 */  async function refineSOSLocation() {
     if (!state.sos || !state.sos.active) return;
 
     let lat = null, lng = null;
@@ -1867,7 +2020,7 @@
   let toastTimer = null;
   function showToast(msg) {
     const toast = el('toast');
-    toast.textContent = msg;
+    toast.textContent = tr(msg);
     toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
@@ -1905,6 +2058,10 @@
   window.cancelSOS = cancelSOS;
   window.stopSOS = stopSOS;
   window.stopAutoFlow = stopAutoFlow;
+  window.ensurePermissions = ensurePermissions;
+  window.testDialEmergency = testDialEmergency;
+  window.setProfileLanguage = setProfileLanguage;
+  window.openSystemSettings = openSystemSettings;
   window.showPairCode = showPairCode;
   window.bindElderByCode = bindElderByCode;
   window.restoreSOS = restoreSOS;
