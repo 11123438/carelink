@@ -154,12 +154,30 @@
       // 短信通知监护人：不需要配对，只要老人端填了手机号
       var phone = p.guardianPhone || p.contactPhone || '';
       if (phone) {
-        CarelinkNative.sendSosSms(phone, sosSmsText(p)).catch(function (err) {
+        CarelinkNative.sendSosSms(phone, sosSmsText(p)).then(function (r) {
+          if (r && r.sent && global.showToast) global.showToast('已发送求助短信给 ' + phone);
+        }).catch(function (err) {
           console.warn('[SMS] 发送失败', err);
+          if (global.showToast) global.showToast('短信发送失败：' + (err && err.message ? err.message : err));
         });
+      } else if (global.showToast) {
+        global.showToast('未填写监护人手机号，短信未发送');
       }
     } else if (idx === 2) {
-      CarelinkNative.makeEmergencyCall(emergencyPhone(p));
+      var dialNumber = emergencyPhone(p);
+      if (!dialNumber) {
+        if (global.showToast) global.showToast('未填写急救电话');
+        return;
+      }
+      CarelinkNative.makeEmergencyCall(dialNumber).then(function (r) {
+        if (global.showToast) {
+          global.showToast('正在拨打 ' + (r && r.number ? r.number : dialNumber));
+        }
+      }).catch(function (err) {
+        if (global.showToast) {
+          global.showToast('拨号失败：' + (err && err.message ? err.message : err));
+        }
+      });
     } else if (idx === 3) {
       CarelinkNative.speakPatientInfo(speechText(p));
       CarelinkNative.startMaxVolumeLoop(loopText(p), 6000);
@@ -221,6 +239,34 @@
     var p = plugin();
     if (!p) return Promise.resolve(skipped('sendSosSms'));
     return Promise.resolve(p.sendSosSms({ phoneNumber: String(phoneNumber || ''), text: String(text || '') }));
+  };
+
+  /** 一次性申请电话/短信/定位/通知权限（系统会连续弹 4 次） */
+  CarelinkNative.requestAllPermissions = function () {
+    var p = plugin();
+    if (!p) return Promise.resolve({ mode: 'noop' });
+    return Promise.resolve(p.requestAllPermissions());
+  };
+
+  /** 查询四个权限的当前状态 */
+  CarelinkNative.checkPermissions = function () {
+    var p = plugin();
+    if (!p) return Promise.resolve({ mode: 'noop' });
+    return Promise.resolve(p.checkPermissions());
+  };
+
+  /** 只申请仍然缺失的权限 */
+  CarelinkNative.requestMissingPermissions = function () {
+    var p = plugin();
+    if (!p) return Promise.resolve({ mode: 'noop', allGranted: true });
+    return Promise.resolve(p.requestMissingPermissions());
+  };
+
+  /** 跳到本应用系统设置页 */
+  CarelinkNative.openAppSettings = function () {
+    var p = plugin();
+    if (!p) return Promise.resolve({ mode: 'noop' });
+    return Promise.resolve(p.openAppSettings());
   };
 
   /**
