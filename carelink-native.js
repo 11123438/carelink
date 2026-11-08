@@ -184,7 +184,8 @@
     } else if (idx === 3) {
       var speakBody = (T && T.speech) ? T.speech() : speechText(p);
       var loopBody = (T && T.loop) ? T.loop() : loopText(p);
-      CarelinkNative.speakPatientInfo(speakBody);
+      var lang = (global.__carelinkText && global.__carelinkText.lang) ? global.__carelinkText.lang() : 'zh';
+      CarelinkNative.speakPatientInfo(speakBody, lang);
       CarelinkNative.startMaxVolumeLoop(loopBody, 6000);
     }
   };
