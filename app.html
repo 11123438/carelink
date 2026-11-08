@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Carelink</title>
+  
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Carelink">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --text: #111827;
+      --text-secondary: #6b7280;
+      --border: #eef1f6;
+      --danger: #dc2626;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: #e5e9f0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: 100dvh;
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+      overflow-y: auto;
+    }
+    .screen.active { opacity: 1; pointer-events: auto; z-index: 2; }
+    .btn {
+      border: none; border-radius: 14px; padding: 16px 20px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      font-family: inherit; display: flex; align-items: center;
+      justify-content: center; gap: 8px; width: 100%;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: #fff; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:disabled { background: #cbd5e1; box-shadow: none; color: #fff; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff; box-shadow: 0 8px 20px rgba(220, 38, 38, 0.35);
+    }
+
+    .lang-page, .role-page, .login-page { padding: 40px 24px; justify-content: center; }
+    .logo-area { text-align: center; margin-bottom: 36px; }
+    .logo-icon {
+      width: 80px; height: 80px; border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+      margin-bottom: 16px;
+    }
+    .logo-icon svg { width: 44px; height: 44px; fill: #fff; }
+    .app-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .app-sub { font-size: 14px; color: var(--text-secondary); }
+
+    .option-list { display: flex; flex-direction: column; gap: 12px; }
+    .option-card {
+      background: var(--card); border-radius: 16px; padding: 20px;
+      display: flex; align-items: center; gap: 16px; cursor: pointer;
+      border: 2px solid transparent; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      transition: all 0.2s;
+    }
+    .option-card:active { transform: scale(0.98); }
+    .option-card.selected { border-color: var(--primary); background: #eff6ff; }
+    .option-icon { font-size: 28px; }
+    .option-name { font-size: 16px; font-weight: 600; color: var(--text); flex: 1; }
+    .option-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .check-icon { color: var(--primary); font-weight: 700; font-size: 18px; }
+
+    .login-page { padding-top: 60px; justify-content: flex-start; }
+    .login-header { margin-bottom: 32px; }
+    .input-group {
+      background: var(--card); border-radius: 14px; padding: 4px 16px;
+      display: flex; align-items: center; margin-bottom: 16px;
+      border: 1.5px solid transparent; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      transition: border-color 0.2s;
+    }
+    .input-group:focus-within { border-color: var(--primary); }
+    .input-group input {
+      border: none; outline: none; flex: 1; font-size: 16px;
+      padding: 16px 0; background: transparent; font-family: inherit;
+    }
+    .prefix-btn {
+      display: flex; align-items: center; gap: 2px;
+      background: transparent; border: none;
+      font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer;
+    }
+    .divider-v { width: 1px; height: 24px; background: #e5e7eb; margin: 0 12px; }
+
+    /* ===== 协议区域：加大手机点击热区 ===== */
+    .agree-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0 26px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 2.2;
+    }
+    .checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .checkbox.checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox.checked::after {
+      content: '';
+      width: 6px;
+      height: 11px;
+      border: solid #fff;
+      border-width: 0 2.2px 2.2px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+    .protocol-link {
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-block;
+      padding: 7px 9px;
+      margin: -7px -9px;
+      border-radius: 6px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      touch-action: manipulation;
+    }
+    .protocol-link:active {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .code-btn {
+      border: none; background: transparent; color: var(--primary);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; font-family: inherit; padding: 8px 0;
+    }
+    .code-btn:disabled { color: #cbd5e1; }
+
+    #screenApp { background: var(--bg); }
+    .app-header {
+      background: var(--card); padding: 12px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+      z-index: 5;
+    }
+    .header-title { font-size: 20px; font-weight: 700; color: var(--text); }
+    .header-role {
+      font-size: 12px; background: #eef4ff; color: var(--primary);
+      padding: 4px 10px; border-radius: 12px; font-weight: 600;
+    }
+    .global-sos-btn {
+      position: absolute; top: 58px; right: 20px;
+      width: 62px; height: 62px; border-radius: 50%;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; cursor: pointer;
+      border: none; font-family: inherit;
+      box-shadow: 0 8px 24px rgba(220,38,38,0.5);
+      animation: pulseSOS 2s infinite; z-index: 100;
+    }
+    .global-sos-btn span { font-size: 10px; font-weight: 500; opacity: 0.9; margin-top: 2px; }
+    .global-sos-btn.show { display: flex; }
+    .global-sos-btn:active { transform: scale(0.92); }
+    @keyframes pulseSOS {
+      0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.6); }
+      70% { box-shadow: 0 0 0 16px rgba(220,38,38,0); }
+      100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+    }
+
+    .app-content {
+      flex: 1; overflow-y: auto; padding: 16px 20px;
+      padding-bottom: calc(90px + var(--safe-bottom));
+      -webkit-overflow-scrolling: touch;
+    }
+    .app-content::-webkit-scrollbar { display: none; }
+
+    .app-tabbar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: calc(70px + var(--safe-bottom));
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding-bottom: var(--safe-bottom);
+      z-index: 10; box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 4px; cursor: pointer; padding: 6px 0;
+      transition: transform 0.15s; color: #9ca3af;
+    }
+    .nav-item:active { transform: scale(0.92); }
+    .nav-item span { font-size: 11px; font-weight: 500; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item.active span { font-weight: 700; }
+    .nav-item.active::after {
+      content: ''; position: absolute; top: 0;
+      width: 24px; height: 3px; border-radius: 0 0 4px 4px;
+      background: var(--primary);
+    }
+
+    .card {
+      background: var(--card); border-radius: 18px; padding: 18px;
+      margin-bottom: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .card-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 10px; display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .list-item {
+      display: flex; align-items: center; padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-icon { font-size: 22px; margin-right: 14px; }
+    .list-content { flex: 1; }
+    .list-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .list-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .list-action { font-size: 13px; color: var(--primary); font-weight: 600; cursor: pointer; }
+
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 10px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-orange { background: #ffedd5; color: #9a3412; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.6);
+      opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 100;
+    }
+    .modal-mask.show { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      position: fixed; left: 50%; top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 86%; max-width: 360px; background: #fff;
+      border-radius: 24px; padding: 24px;
+      z-index: 101; opacity: 0; pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+      text-align: center;
+    }
+    .modal-box.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+    .modal-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px; }
+
+    .agreement-box {
+      text-align: left; max-height: 80vh;
+      display: flex; flex-direction: column; padding: 20px;
+    }
+    .agreement-content {
+      flex: 1; overflow-y: auto; font-size: 13px;
+      color: var(--text-secondary); line-height: 1.7;
+      margin-bottom: 16px; padding-right: 8px;
+    }
+    .agreement-content h3 { font-size: 15px; color: var(--text); margin: 16px 0 8px; }
+    .agreement-content p { margin-bottom: 10px; }
+    .agreement-content b { color: var(--text); }
+
+    .sos-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; color: #fff; opacity: 0;
+      pointer-events: none; transition: opacity 0.3s;
+      padding: 30px 24px calc(26px + var(--safe-bottom));
+      overflow-y: auto;
+    }
+    .sos-overlay.show { opacity: 1; pointer-events: auto; }
+    .sos-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; letter-spacing: 0.5px;
+      background: rgba(255,255,255,0.16); padding: 7px 15px;
+      border-radius: 20px; margin-bottom: 14px; flex-shrink: 0;
+    }
+    .sos-badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #fecaca; animation: blinkDot 1s infinite;
+    }
+    @keyframes blinkDot { 50% { opacity: 0.2; } }
+    .sos-pulse {
+      width: 84px; height: 84px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px; margin-bottom: 12px; flex-shrink: 0;
+      animation: pulseBig 1.5s infinite;
+    }
+    .sos-overlay.looping .sos-pulse { animation-duration: 0.9s; }
+    @keyframes pulseBig {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 40px rgba(255,255,255,0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    }
+    .sos-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; flex-shrink: 0; }
+    .sos-sub { font-size: 13.5px; opacity: 0.85; margin-bottom: 18px; line-height: 1.6; text-align: center; }
+    .sos-countdown {
+      font-size: 54px; font-weight: 800; line-height: 1.05;
+      margin-bottom: 2px; font-variant-numeric: tabular-nums;
+    }
+    .sos-phase {
+      font-size: 19px; font-weight: 700; text-align: center;
+      margin-bottom: 4px; min-height: 26px;
+    }
+    .sos-phase-sub {
+      font-size: 12.5px; opacity: 0.82; text-align: center;
+      line-height: 1.6; margin-bottom: 12px; min-height: 32px;
+      max-width: 330px;
+      display: -webkit-box; -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .sos-loc {
+      font-size: 11.5px; line-height: 1.55; text-align: center;
+      background: rgba(0,0,0,0.18); border-radius: 10px;
+      padding: 8px 12px; margin-bottom: 10px; max-width: 340px;
+      opacity: 0.9; word-break: normal; overflow-wrap: break-word;
+    }
+    .sos-steps {
+      width: 100%; max-width: 330px; display: flex;
+      flex-direction: column; gap: 8px; margin: 2px 0 18px;
+    }
+    .sos-step {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; padding: 9px 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.08); opacity: 0.42;
+      transition: all 0.3s;
+    }
+    .sos-step .ico { width: 20px; text-align: center; flex-shrink: 0; }
+    .sos-step .tick { margin-left: auto; font-size: 13px; opacity: 0.9; }
+    .sos-step.active {
+      opacity: 1; background: rgba(255,255,255,0.22);
+      box-shadow: 0 0 0 1.5px rgba(255,255,255,0.35) inset;
+    }
+    .sos-step.done { opacity: 0.82; }
+    .sos-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 330px; }
+    .sos-cancel, .sos-stop {
+      background: #fff; color: #991b1b; border: none;
+      padding: 16px 40px; border-radius: 30px; width: 100%;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2); font-family: inherit;
+    }
+    .sos-cancel:active, .sos-stop:active { transform: scale(0.97); }
+    .sos-stop { display: none; background: #fef3c7; color: #7c2d12; }
+    .sos-aware {
+      display: none; background: transparent; color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.6);
+      padding: 14px 20px; border-radius: 30px; width: 100%;
+      font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .sos-aware:active { background: rgba(255,255,255,0.14); }
+    .sos-hint { font-size: 11.5px; opacity: 0.65; text-align: center; margin-top: 12px; }
+
+    .hospital-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .hospital-item:last-child { border-bottom: none; }
+    .hospital-logo {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: #eef4ff; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; flex-shrink: 0;
+    }
+    .hospital-info { flex: 1; }
+    .hospital-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .hospital-addr { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .hospital-link {
+      font-size: 13px; color: var(--primary); font-weight: 600;
+      text-decoration: none; padding: 6px 12px;
+      background: #eef4ff; border-radius: 8px;
+    }
+
+    .toast {
+      position: fixed; bottom: 120px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: rgba(17,24,39,0.92); color: #fff;
+      font-size: 13px; padding: 10px 22px; border-radius: 22px;
+      opacity: 0; pointer-events: none; transition: all 0.25s;
+      z-index: 300; text-align: center; max-width: 84%;
+      line-height: 1.5; white-space: normal;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== 急救档案编辑页 ===== */
+    .back-btn {
+      width: 34px; height: 34px; border-radius: 10px; border: none;
+      background: #f2f5fa; color: var(--text); font-size: 22px; line-height: 1;
+      cursor: pointer; font-family: inherit; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      touch-action: manipulation;
+    }
+    .back-btn:active { background: #e5e9f0; }
+    .ep-hero {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      border-left: 4px solid var(--danger);
+    }
+    .ep-hero .card-title { color: #991b1b; }
+    .ep-hero .card-desc { color: #7f1d1d; }
+    .form-row { margin-bottom: 14px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-label {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      margin-bottom: 6px; display: flex; align-items: center; gap: 4px;
+    }
+    .form-label .req { color: var(--danger); font-weight: 700; }
+    .form-input, .form-textarea, .form-select {
+      width: 100%; padding: 13px 14px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: #f9fafb;
+      font-size: 15px; font-family: inherit; color: var(--text);
+      outline: none; transition: border-color .2s, background .2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--primary); background: #fff;
+    }
+    .form-textarea { resize: none; line-height: 1.6; min-height: 76px; }
+    .form-hint { font-size: 11.5px; color: var(--text-secondary); margin-top: 8px; line-height: 1.55; }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 8px 14px; border-radius: 20px; font-size: 13px;
+      background: #f2f5fa; color: #4b5563; border: 1.5px solid transparent;
+      cursor: pointer; user-select: none; transition: all .15s;
+      touch-action: manipulation;
+    }
+    .chip.selected {
+      background: #eef4ff; color: var(--primary);
+      border-color: var(--primary); font-weight: 600;
+    }
+    .ep-footer {
+      flex-shrink: 0; background: #fff;
+      padding: 12px 20px calc(12px + var(--safe-bottom));
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.05);
+    }
+    .sos-med {
+      font-size: 13px; line-height: 1.6; opacity: 0.92;
+      background: rgba(255,255,255,0.14); border-radius: 12px;
+      padding: 10px 16px; margin-bottom: 26px; max-width: 86%;
+      text-align: center; display: none;
+    }
+
+    @media (min-width: 480px) {
+      body { align-items: center; background: #cbd5e1; padding: 20px; }
+      .app-container {
+        height: 820px; max-height: 92vh;
+        border-radius: 40px; overflow: hidden;
+        box-shadow: 0 30px 70px rgba(0,0,0,0.25), 0 0 0 10px #1f2937;
+      }
+      .global-sos-btn { top: 70px; right: 30px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container" id="appContainer">
+
+  <div class="screen active" id="screenLanguage">
+    <div class="lang-page">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-4H5v-2h4V7h2v4h4v2h-4v4z"/></svg>
+        </div>
+        <div class="app-title">Carelink</div>
+        <div class="app-sub">请选择界面语言 / Select Language</div>
+      </div>
+      <div class="option-list">
+        <div class="option-card" onclick="selectLanguage('zh')">
+          <span class="option-icon">🇨🇳</span>
+          <div class="option-name">中文（简体）</div>
+          <span class="check-icon">✓</span>
+        </div>
+        <div class="option-card" onclick="selectLanguage('en')">
+          <span class="option-icon">🇬🇧</span>
+          <div class="option-name">English</div>
+          <span class="check-icon" style="opacity:0;">✓</span>
+        </div>
+        <div class="option-card" onclick="selectLanguage('pt')">
+          <span class="option-icon">🇵🇹</span>
+          <div class="option-name">Português</div>
+          <span class="check-icon" style="opacity:0;">✓</span>
+        </div>
+        <div class="option-card" onclick="selectLanguage('yue')">
+          <span class="option-icon">🇭🇰</span>
+          <div class="option-name">粵語（繁體）</div>
+          <span class="check-icon" style="opacity:0;">✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenRole">
+    <div class="role-page">
+      <div class="logo-area" style="margin-bottom: 30px;">
+        <div class="app-title" style="font-size: 22px;">选择您的身份</div>
+        <div class="app-sub">Select your role</div>
+      </div>
+      <div class="option-list">
+        <div class="option-card" onclick="selectRole('elder')">
+          <span class="option-icon">👴</span>
+          <div class="option-name">老人端</div>
+          <div class="option-desc">大字大按钮，扫码授权、紧急联系人</div>
+        </div>
+        <div class="option-card" onclick="selectRole('guardian')">
+          <span class="option-icon">👨‍👩‍👧</span>
+          <div class="option-name">监护人端</div>
+          <div class="option-desc">授权状态、就医轨迹、异常提醒</div>
+        </div>
+        <div class="option-card" onclick="selectRole('hospital')">
+          <span class="option-icon">🏥</span>
+          <div class="option-name">医院端</div>
+          <div class="option-desc">查询记录、上传就诊记录</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenLogin">
+    <div class="login-page">
+      <div class="login-header">
+        <div class="app-title">登录账号</div>
+        <div class="app-sub" id="loginRoleHint" style="margin-top: 6px;">当前身份：老人端</div>
+      </div>
+      <div class="input-group">
+        <button class="prefix-btn" onclick="showToast('演示环境，区号固定')">
+          <span id="prefixText">+86</span> <span style="font-size:12px;">▾</span>
+        </button>
+        <div class="divider-v"></div>
+        <input type="tel" id="phoneInput" placeholder="请输入手机号" maxlength="11" inputmode="numeric">
+      </div>
+      <div class="input-group">
+        <input type="tel" id="codeInput" placeholder="请输入验证码" maxlength="6" inputmode="numeric">
+        <button class="code-btn" id="codeBtn" disabled onclick="sendCode()">获取验证码</button>
+      </div>
+      
+      <!-- ===== 协议区域：热区加大，文字可点 ===== -->
+      <div class="agree-row">
+        <div class="checkbox" id="agreeBox" onclick="toggleAgree()"></div>
+        <div>我已阅读并同意&nbsp;
+          <span class="protocol-link" onclick="openAgreement('user')">《用户协议》</span>&nbsp;和&nbsp;
+          <span class="protocol-link" onclick="openAgreement('privacy')">《隐私政策》</span>
+        </div>
+      </div>
+      
+      <button class="btn btn-primary" id="loginBtn" disabled onclick="doLogin()">登 录</button>
+      <div style="text-align:center; margin-top: 40px; font-size: 12px; color: #9ca3af;">
+        演示环境：任意手机号 + 任意4位验证码即可登录
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screenApp">
+    <header class="app-header">
+      <div class="header-title" id="appHeaderTitle">扫码授权</div>
+      <div class="header-right">
+        <div class="header-role" id="appHeaderRole">老人端</div>
+      </div>
+    </header>
+
+    <button class="global-sos-btn" id="headerSOSBtn" onclick="openSOS()">
+      SOS
+      <span>一键求助</span>
+    </button>
+
+    <main class="app-content" id="appContent"></main>
+    <nav class="app-tabbar" id="appTabbar"></nav>
+  </div>
+
+  <!-- ===== 急救档案编辑页（老人端 · 我的 → 急救档案） ===== -->
+  <div class="screen" id="screenEmergency">
+    <header class="app-header">
+      <button class="back-btn" onclick="closeEmergencyProfile()" aria-label="返回">‹</button>
+      <div class="header-title">急救档案</div>
+      <div style="width:34px; flex-shrink:0;"></div>
+    </header>
+
+    <main class="app-content" style="padding-bottom: 24px;">
+      <div class="card ep-hero">
+        <div class="card-title">🆘 急救时最需要被知道的信息</div>
+        <div class="card-desc">保存在本机，离线也能查看。点击 SOS 求助时，血型、过敏史与病史会随位置一并展示给急救人员和紧急联系人。</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">基本信息</div>
+        <div class="form-row">
+          <div class="form-label">姓名 <span class="req">*</span></div>
+          <input class="form-input" id="epName" type="text" placeholder="请输入真实姓名" maxlength="20">
+        </div>
+        <div class="form-row">
+          <div class="form-label">年龄</div>
+          <input class="form-input" id="epAge" type="number" inputmode="numeric" placeholder="例如 78" min="0" max="120">
+        </div>
+        <div class="form-row">
+          <div class="form-label">血型</div>
+          <select class="form-select" id="epBlood">
+            <option value="未知">未知 / 不清楚</option>
+            <option value="A+">A 型 Rh+</option>
+            <option value="A-">A 型 Rh−</option>
+            <option value="B+">B 型 Rh+</option>
+            <option value="B-">B 型 Rh−</option>
+            <option value="AB+">AB 型 Rh+</option>
+            <option value="AB-">AB 型 Rh−</option>
+            <option value="O+">O 型 Rh+</option>
+            <option value="O-">O 型 Rh−</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-label">证件 / 医保类型</div>
+          <input class="form-input" id="epIdType" type="text" placeholder="如：港澳居民来往内地通行证 · 内地医保" maxlength="40">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">过敏史</div>
+        <div class="form-row">
+          <div class="form-label">药物过敏</div>
+          <textarea class="form-textarea" id="epDrugAllergy" rows="2" placeholder="如：青霉素、头孢类；无则填「无」"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-label">食物 / 其他过敏</div>
+          <textarea class="form-textarea" id="epFoodAllergy" rows="2" placeholder="如：海鲜、造影剂；无则填「无」"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">既往病史</div>
+        <div class="chip-wrap" id="epHistoryChips"></div>
+        <div class="form-hint">可多选，急救人员据此快速判断风险</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">长期用药</div>
+        <textarea class="form-textarea" id="epMeds" rows="3" placeholder="药名 + 剂量 + 频次，例如：氨氯地平片 5mg 每日一次"></textarea>
+        <div class="form-hint">如正在使用抗凝药（华法林、阿司匹林、氯吡格雷等），请务必注明，将直接影响急救处置。</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">急救电话与联系人</div>
+        <div class="form-row">
+          <div class="form-label">急救电话</div>
+          <input class="form-input" id="epEmergencyPhone" type="tel" inputmode="tel" placeholder="内地 120 / 澳门 999 / 香港 999" maxlength="20">
+          <div class="form-hint">SOS 触发后「拨打急救电话」环节将模拟拨打此号码。</div>
+        </div>
+        <div class="form-row">
+          <div class="form-label">监护人手机号</div>
+          <input class="form-input" id="epGuardianPhone" type="tel" inputmode="tel" placeholder="+86 138 0000 8888" maxlength="24">
+        </div>
+        <div class="form-row">
+          <div class="form-label">紧急联系人姓名</div>
+          <input class="form-input" id="epContactName" type="text" placeholder="如：张先生" maxlength="20">
+        </div>
+        <div class="form-row">
+          <div class="form-label">与本人关系</div>
+          <input class="form-input" id="epContactRel" type="text" placeholder="如：儿子" maxlength="10">
+        </div>
+        <div class="form-row">
+          <div class="form-label">电话</div>
+          <input class="form-input" id="epContactPhone" type="tel" inputmode="tel" placeholder="+86 138 0000 8888" maxlength="24">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">其他备注</div>
+        <textarea class="form-textarea" id="epNote" rows="2" placeholder="如：独居、听力不佳、行动不便等"></textarea>
+      </div>
+
+    </main>
+
+    <div class="ep-footer">
+      <button class="btn btn-primary" onclick="saveEmergencyProfile()">保存急救档案</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 扫码弹窗 -->
+<div class="modal-mask" id="modalScanMask" onclick="closeModal('modalScan')"></div>
+<div class="modal-box" id="modalScan">
+  <div class="modal-title">扫码授权</div>
+  <div style="width: 200px; height: 200px; margin: 0 auto 20px; border: 3px dashed var(--primary); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--primary); position: relative; overflow: hidden;">
+    <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+    <div style="font-size: 13px;">请对准二维码</div>
+  </div>
+  <div class="modal-desc">扫描成功后将授权对方查看您的近期就诊记录</div>
+  <button class="btn btn-primary" onclick="simulateScanSuccess()">模拟扫描成功</button>
+  <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeModal('modalScan')">取消</button>
+</div>
+
+<!-- 协议弹窗 -->
+<div class="modal-mask" id="modalAgreementMask" onclick="closeAgreement()"></div>
+<div class="modal-box agreement-box" id="modalAgreement">
+  <div class="modal-title" id="agreementTitle">用户协议</div>
+  <div class="agreement-content" id="agreementContent"></div>
+  <button class="btn btn-primary" onclick="closeAgreement()">我已阅读</button>
+</div>
+
+<!-- 切换身份弹窗 -->
+<div class="modal-mask" id="modalSwitchMask" onclick="closeSwitchModal()"></div>
+<div class="modal-box" id="modalSwitch">
+  <div class="modal-title">切换身份验证</div>
+  <div class="modal-desc" id="switchModalDesc">为保障安全，切换至【监护人端】需要重新验证</div>
+  <div class="input-group" style="text-align:left; margin-bottom: 14px;">
+    <input type="tel" id="switchCodeInput" placeholder="请输入验证码" maxlength="6" inputmode="numeric">
+    <button class="code-btn" id="switchCodeBtn" onclick="sendSwitchCode()">获取验证码</button>
+  </div>
+  <button class="btn btn-primary" id="switchConfirmBtn" onclick="confirmSwitchRole()" disabled>确认切换</button>
+  <button class="btn btn-outline" style="margin-top: 10px;" onclick="closeSwitchModal()">取消</button>
+</div>
+
+<!-- SOS 全屏求助流程 -->
+<div class="sos-overlay" id="sosOverlay">
+  <div class="sos-badge"><span class="dot"></span>SOS 已启动 · 演示模式</div>
+  <div class="sos-pulse" id="sosPulse">🚨</div>
+  <div class="sos-title">紧急求助</div>
+  <div class="sos-countdown" id="sosCountdown">5</div>
+  <div class="sos-phase" id="sosPhase">5 秒后自动通知监护人</div>
+  <div class="sos-phase-sub" id="sosPhaseSub">误触请立即点击下方「取消求助」</div>
+  <div class="sos-loc" id="sosLocation"></div>
+  <div class="sos-med" id="sosMedInfo"></div>
+  <div class="sos-steps" id="sosSteps">
+    <div class="sos-step" data-step="notify"><span class="ico">👨‍👩‍👧</span><span>通知监护人</span><span class="tick"></span></div>
+    <div class="sos-step" data-step="call"><span class="ico">📞</span><span>拨打急救电话</span><span class="tick"></span></div>
+    <div class="sos-step" data-step="brief"><span class="ico">🗣️</span><span>播报老人信息</span><span class="tick"></span></div>
+    <div class="sos-step" data-step="loop"><span class="ico">🔊</span><span>循环播放求助语音</span><span class="tick"></span></div>
+  </div>
+  <div class="sos-actions">
+    <button class="sos-cancel" id="sosCancelBtn" onclick="cancelSOS()">取消求助</button>
+    <button class="sos-stop" id="sosStopBtn" onclick="stopSOS()">停止循环播放</button>
+    <button class="sos-aware" id="sosAwareBtn" onclick="stopAutoFlow()">老人有意识，停止自动流程</button>
+  </div>
+  <div class="sos-hint">演示环境：不真实拨号、不真实推送</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ============================================================
+   * 协议内容（多语言）
+   * ============================================================ */
+  const PROTOCOLS = {
+    zh: `<h3>跨境就医个人信息及健康医疗资料传输协议</h3>
+<p>本次授权编号：系统自动生成唯一编号。跨境路径：系统显示「始发地 → 接收地」。授权有效期：系统显示起止时间。</p>
+<h3>通用条款（第1-12条）摘要</h3>
+<p><b>1. 本次跨境医疗服务：</b>您申请跨境预约、转诊、远程会诊等服务，系统需将身份及健康资料传输至接收医疗机构。本次授权仅适用于当前就诊，不构成长期授权。</p>
+<p><b>2. 患者与代理：</b>由他人代办的，代办人须完成身份核验并确认已取得患者明确授权或具有法定代理资格。</p>
+<p><b>3. 资料提供方与平台：</b>资料提供方为页面显示的医疗机构；平台如参与处理，将同时显示其法定名称与联系方式。</p>
+<p><b>4. 接收方限制：</b>接收方仅限本页面列明的医疗机构。未经重新授权，不得向其他机构提供。</p>
+<p><b>5. 处理目的：</b>仅用于核实身份、完成预约、了解病史、辅助诊断等本次诊疗目的。不得用于广告、营销、保险推介、信用评估等。</p>
+<p><b>6. 传输资料范围：</b>包括身份信息、预约信息、紧急联系人等，系统逐项显示实际传输项目，未勾选的不传输。</p>
+<p><b>7. 敏感健康资料：</b>包括病史、用药、检验报告等，系统不得默认全选，仅传输本次诊疗必需项目。</p>
+<p><b>8. 传输与访问：</b>通过加密接口传输，仅限参与诊疗的医护人员访问，每次访问均记录日志。</p>
+<p><b>9. 期限与删除：</b>在线查阅权限原则上前7日开始、结束后30日关闭；临时文件30日内删除。</p>
+<p><b>10. 安全与再提供：</b>三方采取加密、访问控制等措施；未经新合法依据不得再提供。</p>
+<p><b>11. 患者权利：</b>可查看资料清单与访问记录，可停止后续传输，可申请更正与投诉。</p>
+<p><b>12. 安全事件：</b>发生泄露时应立即补救，并依法通知患者与监管机关。</p>
+<h3>最终签署</h3>
+<p>本人确认已逐条阅读并理解本协议，单独同意本次个人信息跨境传输，另行同意敏感健康资料传输，并声明本人为患者本人或已取得合法授权。</p>`,
+    en: `<h3>Cross-Boundary Medical Information and Health Data Transfer Agreement</h3>
+<p>Authorization No.: generated by system. Route: origin → recipient. Validity: start and end time displayed.</p>
+<h3>General Clauses (1-12) Summary</h3>
+<p><b>1. Current Service:</b> You apply for cross-boundary appointment, referral or teleconsultation. Information is transferred to the recipient for the current episode of care only.</p>
+<p><b>2. Patient & Representative:</b> A representative must verify identity and confirm valid authorization or lawful authority.</p>
+<p><b>3. Transferor & Platform:</b> The transferor is the institution displayed. If a platform participates, its identity and contact are also shown.</p>
+<p><b>4. Recipient:</b> Limited to the institution identified. No disclosure to others without renewed authorization.</p>
+<p><b>5. Purpose:</b> Only for identity verification, appointment, diagnosis and related care. No advertising, marketing or credit assessment.</p>
+<p><b>6. Data Scope:</b> Identity, appointment and care information. Unselected items are not transferred.</p>
+<p><b>7. Sensitive Health Data:</b> Only necessary items selected, not the full record by default.</p>
+<p><b>8. Transmission & Access:</b> Encrypted interface; access limited to involved professionals; every access logged.</p>
+<p><b>9. Retention:</b> Access begins 7 days before appointment, closes 30 days after; temporary files deleted within 30 days.</p>
+<p><b>10. Security:</b> Encryption, access controls and no onward transfer without lawful basis.</p>
+<p><b>11. Patient Rights:</b> View data list and access history, stop future transfers, request correction and complain.</p>
+<p><b>12. Incidents:</b> Remedial action and notification to patient and regulators as required.</p>
+<h3>Final Signature</h3>
+<p>I have read and understood this agreement, separately consent to the cross-boundary transfer, separately consent to sensitive health data transfer, and confirm I am the patient or have lawful authority.</p>`,
+    pt: `<h3>Acordo de Transferência de Informações Pessoais e Dados de Saúde para Cuidados Transfronteiriços</h3>
+<p>N.º de Autorização: gerado pelo sistema. Rota: origem → destinatário. Validade: data/hora de início e fim.</p>
+<h3>Cláusulas Gerais (1-12) — Resumo</h3>
+<p><b>1. Serviço Atual:</b> Solicita marcação, referenciação ou teleconsulta transfronteiriça. Os dados são transferidos apenas para o episódio de cuidados atual.</p>
+<p><b>2. Doente e Representante:</b> O representante deve verificar a identidade e confirmar autorização válida.</p>
+<p><b>3. Transmitente e Plataforma:</b> O transmitente é a instituição apresentada. Se a plataforma participar, os seus dados também são apresentados.</p>
+<p><b>4. Destinatário:</b> Limitado à instituição identificada. Sem nova autorização, não há comunicação a terceiros.</p>
+<p><b>5. Finalidade:</b> Apenas para verificação de identidade, marcação, diagnóstico e cuidados relacionados. Proibido para publicidade ou marketing.</p>
+<p><b>6. Âmbito dos Dados:</b> Identificação, marcação e cuidados. Elementos não selecionados não são transferidos.</p>
+<p><b>7. Dados Sensíveis:</b> Apenas os necessários, não o processo completo por defeito.</p>
+<p><b>8. Transmissão e Acesso:</b> Interface encriptada; acesso limitado aos profissionais envolvidos; registo de acessos.</p>
+<p><b>9. Conservação:</b> Acesso inicia 7 dias antes e termina 30 dias após; ficheiros temporários eliminados em 30 dias.</p>
+<p><b>10. Segurança:</b> Encriptação, controlos de acesso e proibição de transferência posterior sem fundamento legal.</p>
+<p><b>11. Direitos do Doente:</b> Consultar dados e acessos, impedir transferências futuras, solicitar correção e reclamar.</p>
+<p><b>12. Incidentes:</b> Medidas corretivas e notificação ao doente e autoridades.</p>
+<h3>Assinatura Final</h3>
+<p>Li e compreendi o acordo, consinto separadamente a transferência transfronteiriça, consinto separadamente a transferência de dados de saúde sensíveis e confirmo que sou o doente ou tenho autoridade legal.</p>`,
+    yue: `<h3>跨境就醫個人信息及健康醫療資料傳輸協議</h3>
+<p>本次授權編號：系統自動生成。跨境路徑：系統顯示「始發地 → 接收地」。授權有效期：系統顯示起止時間。</p>
+<h3>通用條款（第1-12條）摘要</h3>
+<p><b>1. 本次跨境醫療服務：</b>您申請跨境預約、轉診、遠程會診等服務，系統需將身份及健康資料傳輸至接收醫療機構。本次授權僅適用於當前就診，不構成長期授權。</p>
+<p><b>2. 患者與代理：</b>由他人代辦的，代辦人須完成身份核驗並確認已取得患者明確授權或具有法定代理資格。</p>
+<p><b>3. 資料提供方與平台：</b>資料提供方為頁面顯示的醫療機構；平台如參與處理，將同時顯示其法定名稱與聯繫方式。</p>
+<p><b>4. 接收方限制：</b>接收方僅限本頁面列明的醫療機構。未經重新授權，不得向其他機構提供。</p>
+<p><b>5. 處理目的：</b>僅用於核實身份、完成預約、了解病史、輔助診斷等本次診療目的。不得用於廣告、營銷、保險推介、信用評估等。</p>
+<p><b>6. 傳輸資料範圍：</b>包括身份信息、預約信息、緊急聯繫人等，系統逐項顯示實際傳輸項目，未勾選的不傳輸。</p>
+<p><b>7. 敏感健康資料：</b>包括病史、用藥、檢驗報告等，系統不得默認全選，僅傳輸本次診療必需項目。</p>
+<p><b>8. 傳輸與訪問：</b>通過加密接口傳輸，僅限參與診療的醫護人員訪問，每次訪問均記錄日誌。</p>
+<p><b>9. 期限與刪除：</b>在線查閱權限原則上前7日開始、結束後30日關閉；臨時文件30日內刪除。</p>
+<p><b>10. 安全與再提供：</b>三方採取加密、訪問控制等措施；未經新合法依據不得再提供。</p>
+<p><b>11. 患者權利：</b>可查看資料清單與訪問記錄，可停止後續傳輸，可申請更正與投訴。</p>
+<p><b>12. 安全事件：</b>發生洩露時應立即補救，並依法通知患者與監管機關。</p>
+<h3>最終簽署</h3>
+<p>本人確認已逐條閱讀並理解本協議，單獨同意本次個人信息跨境傳輸，另行同意敏感健康資料傳輸，並聲明本人為患者本人或已取得合法授權。</p>`
+  };
+
+  /* ============================================================
+   * PWA 安装逻辑
+   * ============================================================ */
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.log('SW 注册失败（本地测试忽略）', err);
+    });
+  }
+  async function installApp() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if (outcome === 'accepted') showToast('已开始安装到主屏幕');
+      else showToast('已取消安装');
+      return;
+    }
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) { showToast('您已经在独立应用模式下运行'); return; }
+    if (isIOS) {
+      alert('请按以下步骤添加到主屏幕：\n\n1. 点击 Safari 底部的「分享」按钮\n2. 向下滑动找到「添加到主屏幕」\n3. 点击右上角的「添加」\n\n完成后即可从桌面全屏打开本应用。');
+    } else {
+      alert('请按以下步骤添加到主屏幕：\n\n1. 点击浏览器右上角菜单（通常是三个点）\n2. 选择「安装应用」或「添加到主屏幕」\n3. 确认安装\n\n如果找不到该选项，请确保页面是通过 HTTPS 访问的。');
+    }
+  }
+
+  /* ============================================================
+   * 全局状态
+   * ============================================================ */
+  const state = {
+    language: 'zh',
+    role: 'elder',
+    loggedIn: false,
+    phone: '',
+    code: '',
+    agreed: false,
+    currentTab: 0,
+    countdown: 0,
+    timer: null,
+    sos: null,
+  };
+
+  const el = id => document.getElementById(id);
+  const phoneInput = el('phoneInput');
+  const codeInput = el('codeInput');
+  const codeBtn = el('codeBtn');
+  const loginBtn = el('loginBtn');
+  const agreeBox = el('agreeBox');
+  const appContent = el('appContent');
+  const appTabbar = el('appTabbar');
+  const appHeaderTitle = el('appHeaderTitle');
+  const appHeaderRole = el('appHeaderRole');
+  const headerSOSBtn = el('headerSOSBtn');
+
+  const i18n = {
+    zh: { tabScan: '扫码授权', tabRecord: '我的记录', tabContact: '紧急联系人', tabAuth: '授权状态', tabTrace: '就医轨迹', tabAlert: '异常提醒', tabPatients: '患者查询', tabUpload: '上传记录', tabHospital: '三地医院', tabProfile: '我的' },
+    en: { tabScan: 'Scan Auth', tabRecord: 'My Records', tabContact: 'Emergency', tabAuth: 'Auth Status', tabTrace: 'Care Trace', tabAlert: 'Alerts', tabPatients: 'Patient Query', tabUpload: 'Upload Record', tabHospital: 'Hospitals', tabProfile: 'Me' },
+    pt: { tabScan: 'Digitalizar', tabRecord: 'Meus Registos', tabContact: 'Emergência', tabAuth: 'Estado da Autorização', tabTrace: 'Rastreio Clínico', tabAlert: 'Alertas', tabPatients: 'Consultar Doente', tabUpload: 'Carregar Registo', tabHospital: 'Hospitais', tabProfile: 'Eu' },
+    yue: { tabScan: '掃碼授權', tabRecord: '我的記錄', tabContact: '緊急聯絡人', tabAuth: '授權狀態', tabTrace: '就醫軌跡', tabAlert: '異常提醒', tabPatients: '患者查詢', tabUpload: '上傳記錄', tabHospital: '三地醫院', tabProfile: '我的' }
+  };
+  const t = key => (i18n[state.language] && i18n[state.language][key]) || key;
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    el(id).classList.add('active');
+  }
+
+  function selectLanguage(lang) {
+    state.language = lang;
+    setTimeout(() => { showScreen('screenRole'); }, 200);
+  }
+
+  function selectRole(role) {
+    state.role = role;
+    const roleNames = { elder: '老人端', guardian: '监护人端', hospital: '医院端' };
+    el('loginRoleHint').textContent = '当前身份：' + roleNames[role];
+    el('appHeaderRole').textContent = roleNames[role];
+    showScreen('screenLogin');
+  }
+
+  function validPhone(v) {
+    return /^1[3-9]\d{9}$/.test(v) || /^[4-9]\d{7}$/.test(v) || /^6\d{7}$/.test(v);
+  }
+
+  function refreshLoginState() {
+    state.phone = phoneInput.value.trim();
+    state.code = codeInput.value.trim();
+    if (state.countdown > 0) {
+      codeBtn.disabled = true;
+      codeBtn.textContent = state.countdown + 's';
+    } else {
+      codeBtn.disabled = !validPhone(state.phone);
+      codeBtn.textContent = '获取验证码';
+    }
+    loginBtn.disabled = !(validPhone(state.phone) && state.code.length >= 4 && state.agreed);
+  }
+
+  phoneInput.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+    refreshLoginState();
+  });
+  codeInput.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    refreshLoginState();
+  });
+
+  function toggleAgree() {
+    state.agreed = !state.agreed;
+    agreeBox.classList.toggle('checked', state.agreed);
+    refreshLoginState();
+  }
+
+  function openAgreement(type) {
+    document.getElementById('agreementTitle').textContent = type === 'user' ? '用户协议' : '隐私政策';
+    document.getElementById('agreementContent').innerHTML = PROTOCOLS[state.language] || PROTOCOLS.zh;
+    el('modalAgreementMask').classList.add('show');
+    el('modalAgreement').classList.add('show');
+  }
+
+  function closeAgreement() {
+    el('modalAgreementMask').classList.remove('show');
+    el('modalAgreement').classList.remove('show');
+  }
+
+  function sendCode() {
+    if (state.countdown > 0 || !validPhone(state.phone)) return;
+    state.countdown = 60;
+    refreshLoginState();
+    showToast('验证码已发送（演示环境：任意4位数字）');
+    if (state.timer) clearInterval(state.timer);
+    state.timer = setInterval(() => {
+      state.countdown--;
+      refreshLoginState();
+      if (state.countdown <= 0) {
+        clearInterval(state.timer);
+        state.timer = null;
+        refreshLoginState();
+      }
+    }, 1000);
+  }
+
+  function doLogin() {
+    if (!state.agreed) { showToast('请先阅读并同意协议'); return; }
+    state.loggedIn = true;
+    showScreen('screenApp');
+    buildTabbar();
+    state.currentTab = 0;
+    switchTab(0);
+    if (state.role === 'guardian') registerGuardianToken();
+    showToast('登录成功，欢迎使用 Carelink');
+  }
+
+  function buildTabbar() {
+    let items = [];
+    if (state.role === 'elder') {
+      items = [{ icon: '📷', label: t('tabScan') }, { icon: '📋', label: t('tabRecord') }, { icon: '📞', label: t('tabContact') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
+    } else if (state.role === 'guardian') {
+      items = [{ icon: '🔐', label: t('tabAuth') }, { icon: '🗺️', label: t('tabTrace') }, { icon: '⚠️', label: t('tabAlert') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
+    } else {
+      items = [{ icon: '🔍', label: t('tabPatients') }, { icon: '📤', label: t('tabUpload') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
+    }
+
+    appTabbar.innerHTML = items.map((item, idx) => `
+      <div class="nav-item ${idx === state.currentTab ? 'active' : ''}" onclick="switchTab(${idx})">
+        <span style="font-size:22px;">${item.icon}</span>
+        <span>${item.label}</span>
+      </div>
+    `).join('');
+
+    if (state.role === 'elder') headerSOSBtn.classList.add('show');
+    else headerSOSBtn.classList.remove('show');
+  }
+
+  function switchTab(idx) {
+    state.currentTab = idx;
+    document.querySelectorAll('.nav-item').forEach((item, i) => {
+      item.classList.toggle('active', i === idx);
+    });
+
+    const titles = {
+      elder: [t('tabScan'), t('tabRecord'), t('tabContact'), t('tabHospital'), t('tabProfile')],
+      guardian: [t('tabAuth'), t('tabTrace'), t('tabAlert'), t('tabHospital'), t('tabProfile')],
+      hospital: [t('tabPatients'), t('tabUpload'), t('tabHospital'), t('tabProfile')]
+    };
+    appHeaderTitle.textContent = titles[state.role][idx] || '';
+    appContent.innerHTML = getContent(state.role, idx);
+    appContent.scrollTop = 0;
+  }
+
+  function getContent(role, tabIndex) {
+    if (role === 'elder' && tabIndex === 4) return renderProfile();
+    if (role === 'guardian' && tabIndex === 4) return renderProfile();
+    if (role === 'hospital' && tabIndex === 3) return renderProfile();
+
+    if (role === 'elder') {
+      if (tabIndex === 0) return renderElderScan();
+      if (tabIndex === 1) return renderElderRecords();
+      if (tabIndex === 2) return renderElderContacts();
+      if (tabIndex === 3) return renderHospitalList();
+    }
+    if (role === 'guardian') {
+      if (tabIndex === 0) return renderGuardianAuth();
+      if (tabIndex === 1) return renderGuardianTrace();
+      if (tabIndex === 2) return renderGuardianAlert();
+      if (tabIndex === 3) return renderHospitalList();
+    }
+    if (role === 'hospital') {
+      if (tabIndex === 0) return renderHospitalQuery();
+      if (tabIndex === 1) return renderHospitalUpload();
+      if (tabIndex === 2) return renderHospitalList();
+    }
+    return '';
+  }
+
+  function renderProfile() {
+    const roleNames = { elder: '老人端', guardian: '监护人端', hospital: '医院端' };
+    const names = { elder: '李建国', guardian: '张先生', hospital: '广东省人民医院' };
+    const avatars = { elder: '👴', guardian: '👨‍👩‍👧', hospital: '🏥' };
+    const roles = [
+      { id: 'elder', name: '老人端', desc: '扫码授权、紧急联系人', icon: '👴' },
+      { id: 'guardian', name: '监护人端', desc: '授权状态、就医轨迹', icon: '👨‍👩‍👧' },
+      { id: 'hospital', name: '医院端', desc: '查询记录、上传记录', icon: '🏥' }
+    ];
+
+    const roleCards = roles.map(r => `
+      <div class="option-card ${state.role === r.id ? 'selected' : ''}" onclick="requestSwitchRole('${r.id}')" style="margin-bottom: 10px; padding: 16px;">
+        <span class="option-icon">${r.icon}</span>
+        <div style="flex: 1;">
+          <div class="option-name" style="font-size: 15px;">${r.name}</div>
+          <div class="option-desc" style="font-size: 11px;">${r.desc}</div>
+        </div>
+        <span class="check-icon" style="opacity: ${state.role === r.id ? '1' : '0'};">✓</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="card" style="text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #eff6ff, #dbeafe); border: none;">
+        <div style="font-size: 60px; margin-bottom: 12px;">${avatars[state.role]}</div>
+        <div style="font-size: 22px; font-weight: 700; color: var(--text);">${names[state.role]}</div>
+        <div style="display: inline-block; margin-top: 8px; padding: 4px 12px; background: #fff; border-radius: 12px; font-size: 12px; color: var(--primary); font-weight: 600;">
+          当前身份：${roleNames[state.role]}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔄 切换身份</div>
+        <div class="card-desc" style="margin-bottom: 16px;">演示环境：切换身份需重新验证手机号</div>
+        ${roleCards}
+      </div>
+      ${state.role === 'elder' ? `
+      <div class="card">
+        <div class="list-item" onclick="openEmergencyProfile()">
+          <span class="list-icon">🆘</span>
+          <div class="list-content">
+            <div class="list-title">急救档案</div>
+            <div class="list-sub">${emergencyProfile.blood && emergencyProfile.blood !== '未知' ? '血型 ' + emergencyProfile.blood + ' · ' : ''}${emergencyProfile.history.length ? emergencyProfile.history.join('、') : '未填写病史'}</div>
+          </div>
+          <span class="list-action">编辑 ›</span>
+        </div>
+      </div>
+      ` : ''}
+      <div class="card">
+        <div class="card-title">🔗 双机配对</div>
+        ${state.role === 'elder' ? `
+          <div class="card-desc">生成 6 位配对码，告诉家人。对方在监护人端输入后，您的 SOS 会同时推送到对方手机并全屏告警。</div>
+          <div id="pairCodeBox" style="font-size:34px;letter-spacing:10px;text-align:center;font-weight:800;color:var(--primary);padding:16px 0 10px;">------</div>
+          <button class="btn btn-outline" onclick="showPairCode()">生成配对码</button>
+        ` : `
+          <div class="card-desc">输入老人端显示的 6 位配对码，绑定后即可收到 SOS 全屏提醒。</div>
+          <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+            <input id="pairCodeInput" inputmode="numeric" maxlength="6" placeholder="6 位配对码"
+                   style="flex:1;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);font-size:16px;outline:none;">
+            <button class="btn btn-primary" style="width:auto;padding:12px 18px;" onclick="bindElderByCode()">绑定</button>
+          </div>
+        `}
+      </div>
+      <div class="card">
+        <div class="list-item" onclick="showToast('打开个人资料设置')">
+          <span class="list-icon">👤</span>
+          <div class="list-content"><div class="list-title">个人资料</div><div class="list-sub">修改头像、姓名、联系方式</div></div>
+          <span class="list-action">›</span>
+        </div>
+        <div class="list-item" onclick="showToast('打开账号安全设置')">
+          <span class="list-icon">🔒</span>
+          <div class="list-content"><div class="list-title">账号与安全</div><div class="list-sub">手机号、密码、隐私设置</div></div>
+          <span class="list-action">›</span>
+        </div>
+        <div class="list-item" onclick="installApp()">
+          <span class="list-icon">📲</span>
+          <div class="list-content"><div class="list-title">安装到手机</div><div class="list-sub">添加到桌面，全屏运行</div></div>
+          <span class="list-action" style="color:var(--primary);">安装</span>
+        </div>
+        <div class="list-item" onclick="showToast('打开关于页面')">
+          <span class="list-icon">ℹ️</span>
+          <div class="list-content"><div class="list-title">关于 Carelink</div><div class="list-sub">版本 v1.9.0</div></div>
+          <span class="list-action">›</span>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom: 20px;">
+        <button class="btn btn-danger" onclick="logout()">退出登录</button>
+      </div>
+    `;
+  }
+
+  let switchTargetRole = null;
+  let switchCountdown = 0;
+  let switchTimer = null;
+
+  function requestSwitchRole(role) {
+    if (state.role === role) return;
+    switchTargetRole = role;
+    const roleNames = { elder: '老人端', guardian: '监护人端', hospital: '医院端' };
+    el('switchModalDesc').textContent = `为保障安全，切换至【${roleNames[role]}】需要重新验证手机号`;
+    const input = el('switchCodeInput');
+    input.value = '';
+    el('switchConfirmBtn').disabled = true;
+    el('switchCodeBtn').disabled = false;
+    el('switchCodeBtn').textContent = '获取验证码';
+    switchCountdown = 0;
+    if (switchTimer) { clearInterval(switchTimer); switchTimer = null; }
+    input.oninput = (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+      el('switchConfirmBtn').disabled = e.target.value.length < 4;
+    };
+    el('modalSwitchMask').classList.add('show');
+    el('modalSwitch').classList.add('show');
+  }
+
+  function closeSwitchModal() {
+    el('modalSwitchMask').classList.remove('show');
+    el('modalSwitch').classList.remove('show');
+    switchTargetRole = null;
+    if (switchTimer) { clearInterval(switchTimer); switchTimer = null; }
+  }
+
+  function sendSwitchCode() {
+    if (switchCountdown > 0) return;
+    switchCountdown = 60;
+    el('switchCodeBtn').disabled = true;
+    el('switchCodeBtn').textContent = switchCountdown + 's';
+    showToast('验证码已发送至 ' + (state.phone || '当前手机号') + '（演示：任意4位数字）');
+    if (switchTimer) clearInterval(switchTimer);
+    switchTimer = setInterval(() => {
+      switchCountdown--;
+      el('switchCodeBtn').textContent = switchCountdown + 's';
+      if (switchCountdown <= 0) {
+        clearInterval(switchTimer);
+        switchTimer = null;
+        el('switchCodeBtn').disabled = false;
+        el('switchCodeBtn').textContent = '获取验证码';
+      }
+    }, 1000);
+  }
+
+  function confirmSwitchRole() {
+    const code = el('switchCodeInput').value.trim();
+    if (code.length < 4) { showToast('请输入4位以上验证码'); return; }
+    const role = switchTargetRole;
+    closeSwitchModal();
+    state.role = role;
+    const roleNames = { elder: '老人端', guardian: '监护人端', hospital: '医院端' };
+    el('appHeaderRole').textContent = roleNames[role];
+    state.currentTab = 0;
+    buildTabbar();
+    switchTab(0);
+    showToast('已切换至 ' + roleNames[role]);
+  }
+
+  function logout() {
+    state.loggedIn = false;
+    state.agreed = false;
+    state.phone = '';
+    state.code = '';
+    phoneInput.value = '';
+    codeInput.value = '';
+    agreeBox.classList.remove('checked');
+    loginBtn.disabled = true;
+    headerSOSBtn.classList.remove('show');
+    refreshLoginState();
+    showScreen('screenLogin');
+    showToast('已退出登录');
+  }
+
+  function renderElderScan() {
+    return `
+      <div style="text-align: center; padding: 30px 0;">
+        <div style="font-size: 64px; margin-bottom: 20px;">📷</div>
+        <div style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">扫码授权</div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 30px;">请将医院或监护人提供的二维码放入框内</div>
+        <button class="btn btn-primary" style="font-size: 18px; padding: 18px;" onclick="openScanModal()">打开扫码</button>
+      </div>
+      <div class="card">
+        <div class="card-title">最近授权记录</div>
+        <div class="list-item">
+          <span class="list-icon">🏥</span>
+          <div class="list-content"><div class="list-title">广东省人民医院</div><div class="list-sub">2026-10-20 14:30 · 有效期 24 小时</div></div>
+          <span class="status-badge badge-green">生效中</span>
+        </div>
+        <div class="list-item">
+          <span class="list-icon">👨‍👩‍👧</span>
+          <div class="list-content"><div class="list-title">张先生（儿子）</div><div class="list-sub">2026-10-18 09:12 · 有效期 7 天</div></div>
+          <span class="status-badge badge-green">生效中</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderElderRecords() {
+    return `
+      <div class="card">
+        <div class="card-title">📋 我的就诊记录</div>
+        <div class="list-item"><span class="list-icon">🩺</span><div class="list-content"><div class="list-title">高血压复诊 · 广东省人民医院</div><div class="list-sub">2026-10-15 · 心血管内科 · 张医生</div></div></div>
+        <div class="list-item"><span class="list-icon">💊</span><div class="list-content"><div class="list-title">药物调整 · 澳门镜湖医院</div><div class="list-sub">2026-09-28 · 老年科 · 陈医生</div></div></div>
+        <div class="list-item"><span class="list-icon">🩻</span><div class="list-content"><div class="list-title">年度体检 · 香港玛丽医院</div><div class="list-sub">2026-08-12 · 体检中心</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💊 当前用药</div>
+        <div class="list-item"><div class="list-content"><div class="list-title">氨氯地平片</div><div class="list-sub">每日一次，每次 5mg · 早餐后</div></div></div>
+        <div class="list-item"><div class="list-content"><div class="list-title">阿托伐他汀钙片</div><div class="list-sub">每日一次，每次 20mg · 睡前</div></div></div>
+      </div>
+    `;
+  }
+
+  function renderElderContacts() {
+    return `
+      <div class="card">
+        <div class="card-title">📞 紧急联系人</div>
+        <div class="list-item"><span class="list-icon">👨</span><div class="list-content"><div class="list-title">张先生（儿子）</div><div class="list-sub">+86 138****8888</div></div><span class="list-action" onclick="showToast('正在呼叫张先生…')">呼叫</span></div>
+        <div class="list-item"><span class="list-icon">👩</span><div class="list-content"><div class="list-title">李女士（女儿）</div><div class="list-sub">+852 6123****</div></div><span class="list-action" onclick="showToast('正在呼叫李女士…')">呼叫</span></div>
+        <div class="list-item"><span class="list-icon">🏥</span><div class="list-content"><div class="list-title">家庭医生 · 陈医生</div><div class="list-sub">+853 6612****</div></div><span class="list-action" onclick="showToast('正在呼叫陈医生…')">呼叫</span></div>
+      </div>
+      <div class="card" style="background: #fef2f2;">
+        <div class="card-title" style="color: #991b1b;">⚠️ 紧急情况下</div>
+        <div class="card-desc" style="margin-bottom: 14px;">您也可以随时点击屏幕右上角的红色 <b>SOS</b> 悬浮图标，一键向所有紧急联系人发送求助短信和位置信息。</div>
+        <button class="btn btn-danger" onclick="openSOS()">立即求助</button>
+      </div>
+    `;
+  }
+
+  function renderGuardianAuth() {
+    return `
+      <div class="card">
+        <div class="card-title">🔐 授权状态</div>
+        <div class="card-desc" style="margin-bottom: 16px;">授权可撤回、可查看、可追踪。以下为“谁看过什么”的清晰记录。</div>
+        <div class="list-item">
+          <span class="list-icon">🏥</span>
+          <div class="list-content"><div class="list-title">广东省人民医院 · 心血管内科</div><div class="list-sub">授权时间：2026-10-15 09:00 · 有效期至 2026-10-22</div><div class="list-sub" style="color:#059669; margin-top:4px;">查看内容：门诊病历、用药记录、检验报告</div></div>
+          <span class="list-action" style="color:#dc2626;" onclick="showToast('授权已撤回')">撤回</span>
+        </div>
+        <div class="list-item">
+          <span class="list-icon">👨‍👩‍👧</span>
+          <div class="list-content"><div class="list-title">张先生（监护人）</div><div class="list-sub">授权时间：2026-10-10 14:00 · 长期有效</div><div class="list-sub" style="color:#059669; margin-top:4px;">查看内容：全部就诊记录、用药提醒</div></div>
+          <span class="list-action" style="color:#dc2626;" onclick="showToast('授权已撤回')">撤回</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 查看记录追踪</div>
+        <div class="list-item"><div class="list-content"><div class="list-title">广东省人民医院 查看了用药记录</div><div class="list-sub">2026-10-18 10:32 · IP 地址已脱敏</div></div></div>
+        <div class="list-item"><div class="list-content"><div class="list-title">张先生 查看了检验报告</div><div class="list-sub">2026-10-17 20:15</div></div></div>
+      </div>
+    `;
+  }
+
+  function renderGuardianTrace() {
+    return `
+      <div class="card">
+        <div class="card-title">🗺️ 就医轨迹</div>
+        <div class="card-desc" style="margin-bottom: 16px;">按时间倒序展示被监护人的就医记录</div>
+        <div class="list-item"><span class="list-icon">🏥</span><div class="list-content"><div class="list-title">广东省人民医院 · 心血管内科</div><div class="list-sub">2026-10-15 09:30 · 高血压复诊</div></div></div>
+        <div class="list-item"><span class="list-icon">🏥</span><div class="list-content"><div class="list-title">澳门镜湖医院 · 老年科</div><div class="list-sub">2026-09-28 11:00 · 药物调整</div></div></div>
+        <div class="list-item"><span class="list-icon">🏥</span><div class="list-content"><div class="list-title">香港玛丽医院 · 体检中心</div><div class="list-sub">2026-08-12 08:45 · 年度体检</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌏 跨地区信息汇总</div>
+        <div class="card-desc">近 6 个月三地就诊次数：广东 3 次，澳门 1 次，香港 1 次。</div>
+      </div>
+    `;
+  }
+
+  function renderGuardianAlert() {
+    return `
+      <div class="card" style="border-left: 4px solid #ef4444;">
+        <div class="card-title" style="color: #991b1b;">⚠️ 异常提醒</div>
+        <div class="list-item"><span class="list-icon">🩸</span><div class="list-content"><div class="list-title">血压异常波动</div><div class="list-sub">2026-10-16 08:12 · 收缩压 158mmHg / 舒张压 96mmHg</div><div class="list-sub" style="color:#dc2626;">高于近 7 天平均值，建议关注</div></div></div>
+        <div class="list-item"><span class="list-icon">💊</span><div class="list-content"><div class="list-title">用药提醒未确认</div><div class="list-sub">2026-10-17 21:00 · 阿托伐他汀钙片未打卡</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔔 提醒设置</div>
+        <div class="card-desc">异常指标将通过短信和 App 推送通知监护人。</div>
+      </div>
+    `;
+  }
+
+  function renderHospitalQuery() {
+    return `
+      <div class="card">
+        <div class="card-title">🔍 查询患者记录</div>
+        <div class="input-group" style="margin-bottom: 16px;"><input type="text" placeholder="输入患者 ID 或姓名" style="padding: 14px 0;"></div>
+        <button class="btn btn-primary" onclick="showToast('查询中…（演示环境）')">查询</button>
+        <div style="text-align:center; margin: 16px 0; color: var(--text-secondary); font-size: 13px;">或</div>
+        <button class="btn btn-outline" onclick="openScanModal()">扫描患者授权二维码</button>
+      </div>
+      <div class="card">
+        <div class="card-title">最近查询</div>
+        <div class="list-item"><span class="list-icon">👤</span><div class="list-content"><div class="list-title">李建国 · ID: GBA-88201</div><div class="list-sub">上次就诊：2026-10-15 · 高血压复诊</div></div><span class="list-action">查看</span></div>
+        <div class="list-item"><span class="list-icon">👤</span><div class="list-content"><div class="list-title">陈美玲 · ID: GBA-77123</div><div class="list-sub">上次就诊：2026-10-12 · 糖尿病随访</div></div><span class="list-action">查看</span></div>
+      </div>
+    `;
+  }
+
+  function renderHospitalUpload() {
+    return `
+      <div class="card">
+        <div class="card-title">📤 上传最新就诊记录</div>
+        <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">患者：李建国 · ID: GBA-88201</div>
+        <div style="margin-bottom: 12px;"><label style="font-size: 13px; font-weight: 600; color: var(--text);">诊断结果</label><input type="text" placeholder="请输入诊断结果" style="width:100%; margin-top:6px; padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; outline: none; background: #f9fafb;"></div>
+        <div style="margin-bottom: 12px;"><label style="font-size: 13px; font-weight: 600; color: var(--text);">处方/用药</label><textarea rows="3" placeholder="请输入处方或用药调整" style="width:100%; margin-top:6px; padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; outline: none; background: #f9fafb; resize: none;"></textarea></div>
+        <div style="margin-bottom: 20px;"><label style="font-size: 13px; font-weight: 600; color: var(--text);">备注</label><input type="text" placeholder="可选" style="width:100%; margin-top:6px; padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; outline: none; background: #f9fafb;"></div>
+        <button class="btn btn-primary" onclick="showToast('就诊记录已上传（演示环境）')">上传记录</button>
+      </div>
+    `;
+  }
+
+  function renderHospitalList() {
+    return `
+      <div class="card">
+        <div class="card-title">🏥 三地合作医院</div>
+        <div class="card-desc" style="margin-bottom: 16px;">点击“访问官网”即可跳转至医院官方网站（演示：广东省人民医院）</div>
+        <div class="hospital-item">
+          <div class="hospital-logo">🏥</div>
+          <div class="hospital-info"><div class="hospital-name">广东省人民医院</div><div class="hospital-addr">广州市越秀区中山二路 106 号</div></div>
+          <a class="hospital-link" href="https://www.gdghospital.org.cn/" target="_blank" rel="noopener">访问官网</a>
+        </div>
+        <div class="hospital-item">
+          <div class="hospital-logo">🏥</div>
+          <div class="hospital-info"><div class="hospital-name">澳门仁伯爵综合医院</div><div class="hospital-addr">澳门半岛东望洋斜巷</div></div>
+          <span class="hospital-link" style="opacity:0.5; cursor:default;">演示不跳转</span>
+        </div>
+        <div class="hospital-item">
+          <div class="hospital-logo">🏥</div>
+          <div class="hospital-info"><div class="hospital-name">香港玛丽医院</div><div class="hospital-addr">香港岛薄扶林道 102 号</div></div>
+          <span class="hospital-link" style="opacity:0.5; cursor:default;">演示不跳转</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function openScanModal() {
+    el('modalScanMask').classList.add('show');
+    el('modalScan').classList.add('show');
+  }
+  function closeModal(id) {
+    el('modalScanMask').classList.remove('show');
+    el(id).classList.remove('show');
+  }
+  function simulateScanSuccess() {
+    closeModal('modalScan');
+    showToast('✅ 扫码成功，已授权对方查看近期记录');
+  }
+
+  /* ============================================================
+   * 急救档案（老人端 · 我的 → 急救档案）
+   * 存放：localStorage，键名 carelink.emergency.v1，离线可用
+   * ============================================================ */
+  const EP_KEY = 'carelink.emergency.v1';
+  const EP_HISTORY_OPTIONS = ['高血压', '糖尿病', '冠心病', '中风', '哮喘', '慢阻肺', '肾病', '肿瘤', '认知障碍', '无'];
+  const EP_DEFAULT = {
+    name: '李建国',
+    age: '78',
+    blood: 'O+',
+    idType: '港澳居民来往内地通行证 · 内地医保',
+    drugAllergy: '青霉素过敏（皮疹）',
+    foodAllergy: '无',
+    history: ['高血压', '冠心病'],
+    meds: '氨氯地平片 5mg 每日一次（早餐后）\n阿托伐他汀钙片 20mg 每晚一次',
+    contactName: '张先生',
+    contactRel: '儿子',
+    contactPhone: '+86 138 0000 8888',
+    emergencyPhone: '120',
+    guardianPhone: '+86 138 0000 8888',
+    note: '独居，听力不佳，请敲门并大声呼叫。'
+  };
+
+  let emergencyProfile = JSON.parse(JSON.stringify(EP_DEFAULT));
+
+  function loadEmergencyProfile() {
+    try {
+      const raw = localStorage.getItem(EP_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        emergencyProfile = Object.assign({}, EP_DEFAULT, saved);
+        if (!Array.isArray(emergencyProfile.history)) emergencyProfile.history = [];
+      }
+    } catch (err) {
+      emergencyProfile = JSON.parse(JSON.stringify(EP_DEFAULT));
+    }
+  }
+
+  function buildHistoryChips() {
+    const box = el('epHistoryChips');
+    if (!box) return;
+    box.innerHTML = EP_HISTORY_OPTIONS.map(h => {
+      const on = emergencyProfile.history.indexOf(h) !== -1;
+      return `<div class="chip ${on ? 'selected' : ''}" data-value="${h}" onclick="toggleHistoryChip(this)">${h}</div>`;
+    }).join('');
+  }
+
+  function toggleHistoryChip(node) {
+    const v = node.dataset.value;
+    const list = emergencyProfile.history;
+    if (v === '无') {
+      emergencyProfile.history = list.indexOf('无') !== -1 ? [] : ['无'];
+    } else {
+      const withoutNone = list.filter(x => x !== '无');
+      emergencyProfile.history = withoutNone.indexOf(v) !== -1
+        ? withoutNone.filter(x => x !== v)
+        : withoutNone.concat(v);
+    }
+    buildHistoryChips();
+  }
+
+  function openEmergencyProfile() {
+    loadEmergencyProfile();
+    el('epName').value = emergencyProfile.name || '';
+    el('epAge').value = emergencyProfile.age || '';
+    el('epBlood').value = emergencyProfile.blood || '未知';
+    el('epIdType').value = emergencyProfile.idType || '';
+    el('epDrugAllergy').value = emergencyProfile.drugAllergy || '';
+    el('epFoodAllergy').value = emergencyProfile.foodAllergy || '';
+    el('epMeds').value = emergencyProfile.meds || '';
+    el('epContactName').value = emergencyProfile.contactName || '';
+    el('epContactRel').value = emergencyProfile.contactRel || '';
+    el('epContactPhone').value = emergencyProfile.contactPhone || '';
+    el('epEmergencyPhone').value = emergencyProfile.emergencyPhone || '';
+    el('epGuardianPhone').value = emergencyProfile.guardianPhone || '';
+    el('epNote').value = emergencyProfile.note || '';
+    buildHistoryChips();
+    showScreen('screenEmergency');
+    el('screenEmergency').scrollTop = 0;
+  }
+
+  function closeEmergencyProfile() {
+    showScreen('screenApp');
+  }
+
+  function saveEmergencyProfile() {
+    const name = el('epName').value.trim();
+    if (!name) {
+      showToast('请先填写姓名');
+      el('epName').focus();
+      return;
+    }
+    emergencyProfile = {
+      name: name,
+      age: el('epAge').value.trim(),
+      blood: el('epBlood').value,
+      idType: el('epIdType').value.trim(),
+      drugAllergy: el('epDrugAllergy').value.trim(),
+      foodAllergy: el('epFoodAllergy').value.trim(),
+      history: emergencyProfile.history.slice(),
+      meds: el('epMeds').value.trim(),
+      contactName: el('epContactName').value.trim(),
+      contactRel: el('epContactRel').value.trim(),
+      contactPhone: el('epContactPhone').value.trim(),
+      emergencyPhone: el('epEmergencyPhone').value.trim(),
+      guardianPhone: el('epGuardianPhone').value.trim(),
+      note: el('epNote').value.trim()
+    };
+    let stored = true;
+    try {
+      localStorage.setItem(EP_KEY, JSON.stringify(emergencyProfile));
+    } catch (err) {
+      stored = false;
+    }
+    closeEmergencyProfile();
+    switchTab(state.currentTab);
+    showToast(stored ? '✅ 急救档案已保存到本机' : '本机存储不可用，修改仅在本次会话生效');
+  }
+
+  function sosMedSummary() {
+    const p = emergencyProfile;
+    const parts = [];
+    if (p.blood && p.blood !== '未知') parts.push('血型 ' + p.blood);
+    if (p.drugAllergy && p.drugAllergy !== '无') parts.push('药物过敏 ' + p.drugAllergy);
+    if (p.history.length && !(p.history.length === 1 && p.history[0] === '无')) parts.push('病史 ' + p.history.join('、'));
+    return parts.join(' · ');
+  }
+
+  /* ============================================================
+   * 一键 SOS · 完整前端流程（纯状态模拟，不真实拨号 / 不真实推送）
+   * 时间轴：0-5s 倒计时 → 5-8s 通知监护人 → 8-11s 拨打急救电话
+   *        → 11-14s 播报老人信息 → 14s 起 循环播放求助语音
+   * 持久化：carelink.sos.v1，刷新页面后可恢复未停止的 SOS
+   * ============================================================ */
+  const SOS_KEY = 'carelink.sos.v1';
+  const SOS_STEPS = ['notify', 'call', 'brief', 'loop'];
+  const SOS_T = [0, 5000, 8000, 11000, 14000];
+  const SOS_PHASE_KEYS = ['countdown', 'notify', 'call', 'brief', 'loop'];
+  const SOS_PHASE_TEXT = [
+    '5 秒后自动通知监护人',
+    '正在通知监护人…',
+    '正在拨打急救电话…',
+    '正在播报老人信息…',
+    '正在循环播放求助语音…'
+  ];
+
+  let sosTicker = null;
+
+  function sosPhaseIndex(elapsed) {
+    let idx = 0;
+    for (let i = 0; i < SOS_T.length; i++) if (elapsed >= SOS_T[i]) idx = i;
+    return idx;
+  }
+
+  function makeSOSLocation() {
+    const base = { lat: 23.1291, lng: 113.2644, addr: '广州市越秀区中山二路（广东省人民医院附近）' };
+    const jitter = () => (Math.random() - 0.5) * 0.002;
+    const d = new Date();
+    const pad = n => (n < 10 ? '0' + n : '' + n);
+    return {
+      lat: +(base.lat + jitter()).toFixed(5),
+      lng: +(base.lng + jitter()).toFixed(5),
+      addr: base.addr,
+      acc: 10,
+      at: d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+          pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds())
+    };
+  }
+
+  function sosLocText(loc) {
+    if (!loc) return '';
+    return '已定位：' + loc.addr + '\n坐标 ' + loc.lat + ', ' + loc.lng +
+           ' · 精度 ±' + (loc.acc || 10) + ' m · ' + (loc.at || '');
+  }
+
+  function sosGuardianLabel() {
+    const p = emergencyProfile;
+    const name = p.contactName || '监护人';
+    const rel = p.contactRel ? '（' + p.contactRel + '）' : '';
+    const phone = p.guardianPhone || p.contactPhone || '';
+    return name + rel + (phone ? ' ' + phone : '');
+  }
+
+  function sosBriefText() {
+    const p = emergencyProfile;
+    const bits = [p.name || '老人'];
+    if (p.age) bits.push(p.age + ' 岁');
+    if (p.blood && p.blood !== '未知') bits.push('血型 ' + p.blood);
+    if (p.drugAllergy && p.drugAllergy !== '无') bits.push('药物过敏 ' + p.drugAllergy);
+    if (p.history.length && !(p.history.length === 1 && p.history[0] === '无')) bits.push('病史 ' + p.history.join('、'));
+    if (p.meds) bits.push('用药 ' + p.meds.replace(/\n+/g, '；'));
+    return bits.join('，');
+  }
+
+  function openSOS() {
+    const startedAt = Date.now();
+    state.sos = { active: true, startedAt: startedAt, loc: makeSOSLocation(), phaseIndex: -1 };
+    try {
+      localStorage.setItem(SOS_KEY, JSON.stringify({
+        active: true, startedAt: startedAt, loc: state.sos.loc
+      }));
+    } catch (err) { /* 隐私模式下忽略，仅本页生效 */ }
+
+    if (typeof window.onSOSStart === 'function') window.onSOSStart();
+    reportCloudSOS();
+
+    el('sosLocation').textContent = sosLocText(state.sos.loc);
+    const med = sosMedSummary();
+    const medEl = el('sosMedInfo');
+    medEl.textContent = med;
+    medEl.style.display = med ? 'block' : 'none';
+
+    el('sosOverlay').classList.add('show');
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    renderSOS(0, 0);
+    startSOSTicker();
+    refineSOSLocation();
+  }
+
+  function startSOSTicker() {
+    stopSOSTicker();
+    sosTicker = setInterval(tickSOS, 200);
+    tickSOS();
+  }
+
+  function stopSOSTicker() {
+    if (sosTicker) { clearInterval(sosTicker); sosTicker = null; }
+  }
+
+  function tickSOS() {
+    if (!state.sos || !state.sos.active) return;
+    const elapsed = Date.now() - state.sos.startedAt;
+    const idx = sosPhaseIndex(elapsed);
+    if (idx !== state.sos.phaseIndex) {
+      state.sos.phaseIndex = idx;
+      if (navigator.vibrate) navigator.vibrate(idx === 4 ? [300, 200, 300] : 120);
+      if (typeof window.onSOSPhaseEnter === 'function') window.onSOSPhaseEnter(idx);
+    }
+    renderSOS(idx, elapsed);
+  }
+
+  function renderSOS(idx, elapsed) {
+    const overlay = el('sosOverlay');
+    const p = emergencyProfile;
+    const loc = (state.sos && state.sos.loc) || {};
+    const emergencyPhone = p.emergencyPhone || '120';
+
+    /* 倒计时数字：仅第一阶段显示 */
+    const cd = el('sosCountdown');
+    if (idx === 0) {
+      cd.style.display = 'block';
+      const left = Math.max(1, Math.ceil((SOS_T[1] - elapsed) / 1000));
+      const shown = Math.min(5, left);
+      if (cd.textContent !== String(shown)) cd.textContent = String(shown);
+    } else {
+      cd.style.display = 'none';
+    }
+
+    el('sosPhase').textContent = SOS_PHASE_TEXT[idx];
+
+    let sub = '';
+    if (idx === 0) sub = '误触请立即点击下方「取消求助」';
+    else if (idx === 1) sub = '已向 ' + sosGuardianLabel() + ' 发送求助短信与实时定位';
+    else if (idx === 2) sub = '模拟拨打 ' + emergencyPhone + '（未真实接通）';
+    else if (idx === 3) sub = '播报内容：' + sosBriefText();
+    else sub = '循环内容：「请帮帮我，我叫' + (p.name || '老人') + '，在' + (loc.addr || '当前位置') + '，请拨打 ' + emergencyPhone + '」';
+    el('sosPhaseSub').textContent = sub;
+
+    /* 步骤进度 */
+    document.querySelectorAll('.sos-step').forEach(node => {
+      const stepIdx = SOS_STEPS.indexOf(node.dataset.step);
+      const phaseIdx = stepIdx + 1;
+      node.classList.toggle('done', idx > phaseIdx);
+      node.classList.toggle('active', idx === phaseIdx);
+      node.querySelector('.tick').textContent = idx > phaseIdx ? '✓' : (idx === phaseIdx ? '进行中' : '');
+    });
+
+    overlay.classList.toggle('looping', idx === 4);
+    el('sosCancelBtn').style.display = idx === 4 ? 'none' : 'block';
+    el('sosStopBtn').style.display = idx === 4 ? 'block' : 'none';
+    el('sosAwareBtn').style.display = idx >= 1 ? 'block' : 'none';
+  }
+
+  function endSOS(message) {
+    sosCloudEventId = null;
+    if (typeof window.onSOSEnd === 'function') window.onSOSEnd();
+    stopSOSTicker();
+    state.sos = null;
+    try { localStorage.removeItem(SOS_KEY); } catch (err) { /* ignore */ }
+    el('sosOverlay').classList.remove('show');
+    el('sosOverlay').classList.remove('looping');
+    if (message) showToast(message);
+  }
+
+  function cancelSOS() { endSOS('已取消紧急求助'); }
+  function stopSOS() { endSOS('已停止循环播放，求助结束'); }
+  function closeSOS() { endSOS(''); }
+
+  /**
+   * 老人有意识：只停本地的自动流程（循环语音 + 前台服务），
+   * 云端事件与监护人通知保持不动，由监护人自行处置。
+   */
+  function stopAutoFlow() {
+    endSOS('已停止自动流程，监护人通知与求助记录仍保留');
+  }
+
+  let sosCloudEventId = null;
+
+  /** 老人端：把 SOS 写进 Firestore 并触发云函数推送（失败静默，不影响本地流程） */
+  function reportCloudSOS() {
+    if (!window.CarelinkCloud || !state.sos || !state.sos.loc) return;
+    const loc = state.sos.loc;
+    CarelinkCloud.reportSOS({ lat: loc.lat, lng: loc.lng, address: loc.addr })
+      .then(function (id) { if (id) sosCloudEventId = id; })
+      .catch(function () {});
+  }
+
+  /** 监护人端：登记 FCM token + 极光 registrationId 到 users/{uid} */
+  function registerGuardianToken() {
+    if (!window.CarelinkCloud || !window.CarelinkNative) return;
+    if (!CarelinkNative.available()) return;
+
+    CarelinkNative.getFcmToken()
+      .then(function (res) {
+        if (res && res.token) return CarelinkCloud.saveGuardianToken(res.token, 'guardian', null);
+      })
+      .catch(function (e) { console.warn('[FCM] token 获取失败', e); });
+
+    // 极光首次启动要几秒才拿到 registrationId，重试最多 6 次
+    var tries = 0;
+    function tryPushId() {
+      CarelinkNative.getPushToken()
+        .then(function (res) {
+          if (res && res.registrationId) {
+            return CarelinkCloud.saveGuardianPushId(res.registrationId, 'guardian', null);
+          }
+          if (tries++ < 6) setTimeout(tryPushId, 3000);
+        })
+        .catch(function (e) { console.warn('[JPush] 取 registrationId 失败', e); });
+    }
+    setTimeout(tryPushId, 2000);
+  }
+
+  /** 老人端：生成 6 位配对码 */
+  function showPairCode() {
+    if (!window.CarelinkCloud) { showToast('云端未就绪，检查网络'); return; }
+    const box = el('pairCodeBox');
+    box.textContent = '生成中…';
+    CarelinkCloud.createPairCode().then(function (code) {
+      if (code) {
+        box.textContent = code;
+        showToast('配对码已生成，10 分钟内有效');
+      } else {
+        box.textContent = '------';
+        showToast('生成失败，请检查网络后重试');
+      }
+    });
+  }
+
+  /** 监护人端：输入配对码绑定老人 */
+  function bindElderByCode() {
+    const input = el('pairCodeInput');
+    const code = (input && input.value || '').trim();
+    if (code.length !== 6) { showToast('请输入 6 位配对码'); return; }
+    if (!window.CarelinkCloud) { showToast('云端未就绪，检查网络'); return; }
+    CarelinkCloud.linkByPairCode(code).then(function (res) {
+      if (res && res.ok) {
+        showToast('✅ 绑定成功，已能接收该老人的 SOS');
+      } else {
+        const map = {
+          code_not_found: '配对码不存在',
+          expired: '配对码已过期',
+          self: '不能绑定自己'
+        };
+        showToast(map[res && res.reason] || '绑定失败，请重试');
+      }
+    });
+  }
+
+  /** 用真实定位替换模拟坐标，并让原生反查到中文地址 */
+  async function refineSOSLocation() {
+    if (!state.sos || !state.sos.active) return;
+
+    let lat = null, lng = null;
+    try {
+      const geo = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Geolocation;
+      if (geo && geo.getCurrentPosition) {
+        const pos = await geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      } else if (navigator.geolocation) {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject,
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+        });
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      }
+    } catch (err) {
+      // 用户拒绝或超时：保留模拟坐标，不打断 SOS
+    }
+    if (lat == null || !state.sos || !state.sos.active) return;
+
+    let address = null;
+    try {
+      if (window.CarelinkNative && CarelinkNative.available() && CarelinkNative.reverseGeocode) {
+        const r = await CarelinkNative.reverseGeocode(lat, lng);
+        address = r && r.address;
+      }
+    } catch (err) { /* 反查失败就用坐标 */ }
+
+    if (!state.sos || !state.sos.active) return;
+    state.sos.loc = Object.assign({}, state.sos.loc, {
+      lat: +Number(lat).toFixed(5),
+      lng: +Number(lng).toFixed(5),
+      addr: address || state.sos.loc.addr
+    });
+    el('sosLocation').textContent = sosLocText(state.sos.loc);
+    try {
+      localStorage.setItem(SOS_KEY, JSON.stringify({
+        active: true, startedAt: state.sos.startedAt, loc: state.sos.loc
+      }));
+    } catch (err) { /* ignore */ }
+    if (sosCloudEventId && window.CarelinkCloud) {
+      CarelinkCloud.updateSOS(sosCloudEventId, state.sos.loc).catch(function () {});
+    }
+  }
+
+  function restoreSOS() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(SOS_KEY) || 'null'); } catch (err) { saved = null; }
+    if (!saved || !saved.active || !saved.startedAt) return;
+
+    const elapsed = Date.now() - saved.startedAt;
+    state.sos = {
+      active: true,
+      startedAt: saved.startedAt,
+      loc: saved.loc || makeSOSLocation(),
+      phaseIndex: -1
+    };
+    el('sosLocation').textContent = sosLocText(state.sos.loc);
+    const med = sosMedSummary();
+    const medEl = el('sosMedInfo');
+    medEl.textContent = med;
+    medEl.style.display = med ? 'block' : 'none';
+    el('sosOverlay').classList.add('show');
+    renderSOS(sosPhaseIndex(elapsed), elapsed);
+    startSOSTicker();
+    if (typeof window.onSOSStart === 'function') window.onSOSStart();
+    refineSOSLocation();
+    showToast('检测到未结束的求助，已恢复 SOS 界面');
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = el('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  (function init() {
+    loadEmergencyProfile();
+    showScreen('screenLanguage');
+    restoreSOS();
+    document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+  })();
+
+  /* 供 carelink-native.js 读取当前档案与 SOS 状态（只读） */
+  window.__carelinkState = {
+    profile: function () { return emergencyProfile; },
+    sos: function () { return state.sos; }
+  };
+
+  window.selectLanguage = selectLanguage;
+  window.selectRole = selectRole;
+  window.toggleAgree = toggleAgree;
+  window.openAgreement = openAgreement;
+  window.closeAgreement = closeAgreement;
+  window.sendCode = sendCode;
+  window.doLogin = doLogin;
+  window.switchTab = switchTab;
+  window.requestSwitchRole = requestSwitchRole;
+  window.closeSwitchModal = closeSwitchModal;
+  window.sendSwitchCode = sendSwitchCode;
+  window.confirmSwitchRole = confirmSwitchRole;
+  window.openScanModal = openScanModal;
+  window.closeModal = closeModal;
+  window.simulateScanSuccess = simulateScanSuccess;
+  window.openSOS = openSOS;
+  window.cancelSOS = cancelSOS;
+  window.stopSOS = stopSOS;
+  window.stopAutoFlow = stopAutoFlow;
+  window.showPairCode = showPairCode;
+  window.bindElderByCode = bindElderByCode;
+  window.restoreSOS = restoreSOS;
+  window.openEmergencyProfile = openEmergencyProfile;
+  window.closeEmergencyProfile = closeEmergencyProfile;
+  window.saveEmergencyProfile = saveEmergencyProfile;
+  window.toggleHistoryChip = toggleHistoryChip;
+  window.showToast = showToast;
+  window.logout = logout;
+  window.installApp = installApp;
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js" defer></script>
+<script src="firebase-sos.js" defer></script>
+<script src="carelink-native.js"></script>
+</body>
+</html>
