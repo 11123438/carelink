@@ -1629,12 +1629,9 @@
       });
   }
   function sosMedSummary() {
-    const p = emergencyProfile;
-    const parts = [];
-    if (p.blood && p.blood !== '未知') parts.push('血型 ' + p.blood);
-    if (p.drugAllergy && p.drugAllergy !== '无') parts.push('药物过敏 ' + p.drugAllergy);
-    if (p.history.length && !(p.history.length === 1 && p.history[0] === '无')) parts.push('病史 ' + p.history.join('、'));
-    return parts.join(' · ');
+    const v = sosDisplayValues();
+    if (!v.blood || v.blood === st().unknown) return '';
+    return fill(st().med, v);
   }
 
   /* ============================================================
@@ -1664,7 +1661,13 @@
   }
 
   function makeSOSLocation() {
-    const base = { lat: 23.1291, lng: 113.2644, addr: '广州市越秀区中山二路（广东省人民医院附近）' };
+    const addrMap = {
+      zh: '广州市越秀区中山二路（广东省人民医院附近）',
+      yue: '廣州市越秀區中山二路（廣東省人民醫院附近）',
+      en: "Zhongshan 2nd Road, Yuexiu, Guangzhou (near Guangdong Provincial People's Hospital)",
+      pt: 'Rua Zhongshan 2, Yuexiu, Guangzhou (junto ao Hospital Provincial de Guangdong)'
+    };
+    const base = { lat: 23.1291, lng: 113.2644, addr: addrMap[state.language] || addrMap.zh };
     const jitter = () => (Math.random() - 0.5) * 0.002;
     const d = new Date();
     const pad = n => (n < 10 ? '0' + n : '' + n);
@@ -1678,29 +1681,142 @@
     };
   }
 
+  /* ===== 随语言变化的动态文案（拼接句） ===== */
+  const SOS_TEXT = {
+    zh: {
+      loc: '已定位：{addr}\n坐标 {lat}, {lng} · 精度 ±{acc} m · {at}',
+      guardian: '{name}（{rel}）{phone}',
+      guardianFallback: '监护人',
+      brief: '{name}，{age} 岁，血型 {blood}，过敏 {allergy}，病史 {history}',
+      med: '血型 {blood} · 过敏 {allergy} · 病史 {history}',
+      speech: '患者{name}，{age}岁，血型{blood}，过敏史{allergy}，基础病{history}。当前位置：{addr}。请立即前往救援。',
+      loop: '请帮帮我，我叫{name}，在{addr}，请拨打 {phone}。',
+      smsTitle: '【Carelink 紧急求助】',
+      smsBody: '{name}，{age}岁 发起 SOS。\n位置：{addr} {map}\n血型：{blood}\n过敏：{allergy}\n基础病：{history}',
+      sub0: '误触请立即点击下方「取消求助」',
+      sub1: '已向 {guardian} 发送求助短信与实时定位',
+      sub2: '模拟拨打 {phone}（未真实接通）',
+      sub3: '播报内容：{brief}',
+      sub4: '循环内容：「{loop}」',
+      unknown: '未知', none: '无', elder: '老人', years: ' 岁'
+    },
+    en: {
+      loc: 'Location: {addr}\nCoordinates {lat}, {lng} · accuracy ±{acc} m · {at}',
+      guardian: '{name} ({rel}) {phone}',
+      guardianFallback: 'guardian',
+      brief: '{name}, {age} yrs, blood {blood}, allergies {allergy}, conditions {history}',
+      med: 'Blood {blood} · Allergies {allergy} · Conditions {history}',
+      speech: 'Patient {name}, {age} years old, blood type {blood}, allergies {allergy}, conditions {history}. Current location: {addr}. Please come immediately.',
+      loop: 'Please help me. My name is {name}. I am at {addr}. Please call {phone}.',
+      smsTitle: '[Carelink SOS]',
+      smsBody: '{name}, {age} sent an SOS.\nLocation: {addr} {map}\nBlood type: {blood}\nAllergies: {allergy}\nConditions: {history}',
+      sub0: 'Tap Cancel below if this was a mistake',
+      sub1: 'SOS SMS with location sent to {guardian}',
+      sub2: 'Dialing {phone}',
+      sub3: 'Reading: {brief}',
+      sub4: 'Looping: “{loop}”',
+      unknown: 'unknown', none: 'none', elder: 'the elder', years: ' yrs'
+    },
+    pt: {
+      loc: 'Localização: {addr}\nCoordenadas {lat}, {lng} · precisão ±{acc} m · {at}',
+      guardian: '{name} ({rel}) {phone}',
+      guardianFallback: 'cuidador',
+      brief: '{name}, {age} anos, sangue {blood}, alergias {allergy}, doenças {history}',
+      med: 'Sangue {blood} · Alergias {allergy} · Doenças {history}',
+      speech: 'Doente {name}, {age} anos, grupo sanguíneo {blood}, alergias {allergy}, doenças {history}. Localização atual: {addr}. Por favor, venham imediatamente.',
+      loop: 'Por favor, ajudem-me. Chamo-me {name}. Estou em {addr}. Liguem para {phone}.',
+      smsTitle: '[Carelink SOS]',
+      smsBody: '{name}, {age} enviou um SOS.\nLocalização: {addr} {map}\nGrupo sanguíneo: {blood}\nAlergias: {allergy}\nDoenças: {history}',
+      sub0: 'Toque em Cancelar se foi engano',
+      sub1: 'SMS de socorro com localização enviado para {guardian}',
+      sub2: 'A ligar para {phone}',
+      sub3: 'A ler: {brief}',
+      sub4: 'A repetir: “{loop}”',
+      unknown: 'desconhecido', none: 'nenhuma', elder: 'o idoso', years: ' anos'
+    },
+    yue: {
+      loc: '已定位：{addr}\n座標 {lat}, {lng} · 精度 ±{acc} m · {at}',
+      guardian: '{name}（{rel}）{phone}',
+      guardianFallback: '監護人',
+      brief: '{name}，{age} 歲，血型 {blood}，敏感 {allergy}，病史 {history}',
+      med: '血型 {blood} · 敏感 {allergy} · 病史 {history}',
+      speech: '病人{name}，{age}歲，血型{blood}，敏感史{allergy}，基礎病{history}。而家位置：{addr}。請即刻嚟救援。',
+      loop: '請幫幫我，我叫{name}，喺{addr}，請打 {phone}。',
+      smsTitle: '【Carelink 緊急求助】',
+      smsBody: '{name}，{age}歲 發起 SOS。\n位置：{addr} {map}\n血型：{blood}\n敏感：{allergy}\n基礎病：{history}',
+      sub0: '撳錯請即刻撳下面「取消求助」',
+      sub1: '已經發 SMS 同定位俾 {guardian}',
+      sub2: '正在打 {phone}',
+      sub3: '讀出：{brief}',
+      sub4: '循環：“{loop}”',
+      unknown: '未知', none: '無', elder: '長者', years: ' 歲'
+    }
+  };
+
+  function st() { return SOS_TEXT[state.language] || SOS_TEXT.zh; }
+  function fill(tpl, vars) {
+    return String(tpl).replace(/\{(\w+)\}/g, function (m, k) {
+      return (vars[k] === undefined || vars[k] === null || vars[k] === '') ? '' : vars[k];
+    });
+  }
+
+  function sosDisplayValues() {
+    const p = emergencyProfile;
+    const t = st();
+    const history = (Array.isArray(p.history) && p.history.length &&
+                     !(p.history.length === 1 && p.history[0] === '无'))
+      ? p.history.join(state.language === 'zh' || state.language === 'yue' ? '、' : ', ')
+      : t.none;
+    return {
+      name: tr(p.name || t.elder),
+      age: p.age || t.unknown,
+      blood: (p.blood && p.blood !== '未知') ? p.blood : t.unknown,
+      allergy: tr((p.drugAllergy && p.drugAllergy !== '无') ? p.drugAllergy : t.none),
+      history: tr(history)
+    };
+  }
+
   function sosLocText(loc) {
     if (!loc) return '';
-    return '已定位：' + loc.addr + '\n坐标 ' + loc.lat + ', ' + loc.lng +
-           ' · 精度 ±' + (loc.acc || 10) + ' m · ' + (loc.at || '');
+    return fill(st().loc, {
+      addr: loc.addr, lat: loc.lat, lng: loc.lng,
+      acc: loc.acc || 10, at: loc.at || ''
+    });
   }
 
   function sosGuardianLabel() {
     const p = emergencyProfile;
-    const name = p.contactName || '监护人';
-    const rel = p.contactRel ? '（' + p.contactRel + '）' : '';
-    const phone = p.guardianPhone || p.contactPhone || '';
-    return name + rel + (phone ? ' ' + phone : '');
+    const t = st();
+    return fill(t.guardian, {
+      name: p.contactName || t.guardianFallback,
+      rel: p.contactRel || '',
+      phone: p.guardianPhone || p.contactPhone || ''
+    }).replace(/\s+/g, ' ').trim();
   }
 
   function sosBriefText() {
-    const p = emergencyProfile;
-    const bits = [p.name || '老人'];
-    if (p.age) bits.push(p.age + ' 岁');
-    if (p.blood && p.blood !== '未知') bits.push('血型 ' + p.blood);
-    if (p.drugAllergy && p.drugAllergy !== '无') bits.push('药物过敏 ' + p.drugAllergy);
-    if (p.history.length && !(p.history.length === 1 && p.history[0] === '无')) bits.push('病史 ' + p.history.join('、'));
-    if (p.meds) bits.push('用药 ' + p.meds.replace(/\n+/g, '；'));
-    return bits.join('，');
+    return fill(st().brief, sosDisplayValues());
+  }
+
+  function sosSpeechText() {
+    const v = sosDisplayValues();
+    v.addr = (state.sos && state.sos.loc && state.sos.loc.addr) || '';
+    return fill(st().speech, v);
+  }
+
+  function sosLoopText() {
+    const v = sosDisplayValues();
+    v.addr = (state.sos && state.sos.loc && state.sos.loc.addr) || '';
+    v.phone = emergencyProfile.emergencyPhone || '120';
+    return fill(st().loop, v);
+  }
+
+  function sosSmsText() {
+    const v = sosDisplayValues();
+    const loc = state.sos && state.sos.loc ? state.sos.loc : {};
+    v.addr = loc.addr || '';
+    v.map = (loc.lat && loc.lng) ? 'https://maps.google.com/?q=' + loc.lat + ',' + loc.lng : '';
+    return fill(st().smsTitle, {}) + '\n' + fill(st().smsBody, v);
   }
 
   function openSOS() {
@@ -1771,11 +1887,11 @@
     el('sosPhase').textContent = SOS_PHASE_TEXT[idx];
 
     let sub = '';
-    if (idx === 0) sub = '误触请立即点击下方「取消求助」';
-    else if (idx === 1) sub = '已向 ' + sosGuardianLabel() + ' 发送求助短信与实时定位';
-    else if (idx === 2) sub = '模拟拨打 ' + emergencyPhone + '（未真实接通）';
-    else if (idx === 3) sub = '播报内容：' + sosBriefText();
-    else sub = '循环内容：「请帮帮我，我叫' + (p.name || '老人') + '，在' + (loc.addr || '当前位置') + '，请拨打 ' + emergencyPhone + '」';
+    if (idx === 0) sub = st().sub0;
+    else if (idx === 1) sub = fill(st().sub1, { guardian: sosGuardianLabel() });
+    else if (idx === 2) sub = fill(st().sub2, { phone: emergencyPhone });
+    else if (idx === 3) sub = fill(st().sub3, { brief: sosBriefText() });
+    else sub = fill(st().sub4, { loop: sosLoopText() });
     el('sosPhaseSub').textContent = sub;
 
     /* 步骤进度 */
@@ -2034,6 +2150,12 @@
   })();
 
   /* 供 carelink-native.js 读取当前档案与 SOS 状态（只读） */
+  /* 供 carelink-native.js 取用当前语言的动态文案 */
+  window.__carelinkText = {
+    speech: function () { return sosSpeechText(); },
+    loop: function () { return sosLoopText(); },
+    sms: function () { return sosSmsText(); }
+  };
   window.__carelinkState = {
     profile: function () { return emergencyProfile; },
     sos: function () { return state.sos; }
