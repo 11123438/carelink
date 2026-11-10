@@ -936,10 +936,10 @@
   const headerSOSBtn = el('headerSOSBtn');
 
   const i18n = {
-    zh: { tabScan: '扫码授权', tabRecord: '我的记录', tabContact: '紧急联系人', tabAuth: '授权状态', tabTrace: '就医轨迹', tabAlert: '异常提醒', tabPatients: '患者查询', tabUpload: '上传记录', tabHospital: '三地医院', tabProfile: '我的' },
-    en: { tabScan: 'Scan Auth', tabRecord: 'My Records', tabContact: 'Emergency', tabAuth: 'Auth Status', tabTrace: 'Care Trace', tabAlert: 'Alerts', tabPatients: 'Patient Query', tabUpload: 'Upload Record', tabHospital: 'Hospitals', tabProfile: 'Me' },
-    pt: { tabScan: 'Digitalizar', tabRecord: 'Meus Registos', tabContact: 'Emergência', tabAuth: 'Estado da Autorização', tabTrace: 'Rastreio Clínico', tabAlert: 'Alertas', tabPatients: 'Consultar Doente', tabUpload: 'Carregar Registo', tabHospital: 'Hospitais', tabProfile: 'Eu' },
-    yue: { tabScan: '掃碼授權', tabRecord: '我的記錄', tabContact: '緊急聯絡人', tabAuth: '授權狀態', tabTrace: '就醫軌跡', tabAlert: '異常提醒', tabPatients: '患者查詢', tabUpload: '上傳記錄', tabHospital: '三地醫院', tabProfile: '我的' }
+    zh: { tabScan: '扫码授权', tabRecord: '我的记录', tabContact: '紧急联系人', tabAuth: '授权状态', tabTrace: '就医轨迹', tabAlert: '异常提醒', tabPatients: '患者查询', tabUpload: '上传记录', tabHospital: '三地医院', tabProfile: '我的', tabScanQr: '扫码' },
+    en: { tabScan: 'Scan Auth', tabRecord: 'My Records', tabContact: 'Emergency', tabAuth: 'Auth Status', tabTrace: 'Care Trace', tabAlert: 'Alerts', tabPatients: 'Patient Query', tabUpload: 'Upload Record', tabHospital: 'Hospitals', tabProfile: 'Me', tabScanQr: 'Scan' },
+    pt: { tabScan: 'Digitalizar', tabRecord: 'Meus Registos', tabContact: 'Emergência', tabAuth: 'Estado da Autorização', tabTrace: 'Rastreio Clínico', tabAlert: 'Alertas', tabPatients: 'Consultar Doente', tabUpload: 'Carregar Registo', tabHospital: 'Hospitais', tabProfile: 'Eu', tabScanQr: 'Digitalizar' },
+    yue: { tabScan: '掃碼授權', tabRecord: '我的記錄', tabContact: '緊急聯絡人', tabAuth: '授權狀態', tabTrace: '就醫軌跡', tabAlert: '異常提醒', tabPatients: '患者查詢', tabUpload: '上傳記錄', tabHospital: '三地醫院', tabProfile: '我的', tabScanQr: '扫码' }
   };
   const t = key => (i18n[state.language] && i18n[state.language][key]) || key;
 
@@ -1105,7 +1105,7 @@
     } else if (state.role === 'guardian') {
       items = [{ icon: '🔐', label: t('tabAuth') }, { icon: '🗺️', label: t('tabTrace') }, { icon: '⚠️', label: t('tabAlert') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
     } else {
-      items = [{ icon: '🔍', label: t('tabPatients') }, { icon: '📤', label: t('tabUpload') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
+      items = [{ icon: '📷', label: t('tabScanQr') }, { icon: '🔍', label: t('tabPatients') }, { icon: '📤', label: t('tabUpload') }, { icon: '🏥', label: t('tabHospital') }, { icon: '👤', label: t('tabProfile') }];
     }
 
     appTabbar.innerHTML = items.map((item, idx) => `
@@ -1128,18 +1128,20 @@
     const titles = {
       elder: [t('tabScan'), t('tabRecord'), t('tabContact'), t('tabHospital'), t('tabProfile')],
       guardian: [t('tabAuth'), t('tabTrace'), t('tabAlert'), t('tabHospital'), t('tabProfile')],
-      hospital: [t('tabPatients'), t('tabUpload'), t('tabHospital'), t('tabProfile')]
+      hospital: [t('tabScanQr'), t('tabPatients'), t('tabUpload'), t('tabHospital'), t('tabProfile')]
     };
     appHeaderTitle.textContent = titles[state.role][idx] || '';
     appContent.innerHTML = getContent(state.role, idx);
     translateDOM(el('screenApp'));
     appContent.scrollTop = 0;
+    stopScanCamera();
+    if (state.role === 'hospital' && idx === 0) setTimeout(startScanCamera, 300);
   }
 
   function getContent(role, tabIndex) {
     if (role === 'elder' && tabIndex === 4) return renderProfile();
     if (role === 'guardian' && tabIndex === 4) return renderProfile();
-    if (role === 'hospital' && tabIndex === 3) return renderProfile();
+    if (role === 'hospital' && tabIndex === 4) return renderProfile();
 
     if (role === 'elder') {
       if (tabIndex === 0) return renderElderScan();
@@ -1154,9 +1156,10 @@
       if (tabIndex === 3) return renderHospitalList();
     }
     if (role === 'hospital') {
-      if (tabIndex === 0) return renderHospitalQuery();
-      if (tabIndex === 1) return renderHospitalUpload();
-      if (tabIndex === 2) return renderHospitalList();
+      if (tabIndex === 0) return renderScanner();
+      if (tabIndex === 1) return renderHospitalQuery();
+      if (tabIndex === 2) return renderHospitalUpload();
+      if (tabIndex === 3) return renderHospitalList();
     }
     return '';
   }
@@ -1244,6 +1247,11 @@
         `}
       </div>
       <div class="card">
+        <div class="card-title">📷 急救二维码</div>
+        <div class="card-desc">让医院端扫一扫，直接读取您的急救资料。</div>
+        <div id="qrBox" style="display:flex;justify-content:center;margin:14px 0;"></div>
+        <button class="btn btn-outline" onclick="showMyQr()">生成二维码</button>
+      </div>      <div class="card">
         <div class="card-title">🔐 权限自检</div>
         <div class="card-desc" id="permStatusText">电话、短信、定位、通知——缺哪项补哪项，SOS 才能完整工作。</div>
         <div style="display:flex;gap:10px;margin-top:14px;">
@@ -1468,6 +1476,120 @@
     `;
   }
 
+  /* ===== 急救二维码：老人出示 / 医院扫描 ===== */
+  let scanStream = null, scanTimer = null;
+
+  function qrPayload() {
+    const p = emergencyProfile;
+    return JSON.stringify({
+      t: 'carelink-profile',
+      name: p.name, age: p.age, blood: p.blood,
+      nameEn: p.nameEn, allergyEn: p.allergyEn, historyEn: p.historyEn,
+      allergy: p.drugAllergy, food: p.foodAllergy,
+      history: Array.isArray(p.history) ? p.history : [],
+      meds: p.meds, emergencyPhone: p.emergencyPhone,
+      guardianPhone: p.guardianPhone
+    });
+  }
+
+  function showMyQr() {
+    const box = el('qrBox');
+    if (!box) return;
+    box.innerHTML = '';
+    if (typeof QRCode === 'undefined') {
+      box.innerHTML = '<div style="font-size:12px;color:#dc2626;">二维码组件加载失败，请联网后重试</div>';
+      return;
+    }
+    new QRCode(box, { text: qrPayload(), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  }
+
+  function renderScanner() {
+    return `
+      <div class="card">
+        <div class="card-title">📷 扫描老人急救码</div>
+        <div class="card-desc">把老人端的「急救二维码」对准摄像头，即可读取其急救资料。</div>
+        <div style="position:relative;margin-top:14px;border-radius:16px;overflow:hidden;background:#000;height:300px;">
+          <video id="scanVideo" playsinline muted style="width:100%;height:100%;object-fit:cover;"></video>
+        </div>
+        <div id="scanHint" style="text-align:center;font-size:13px;color:var(--text-secondary);margin-top:12px;">正在打开摄像头…</div>
+      </div>
+      <div id="scanResult"></div>
+    `;
+  }
+
+  async function startScanCamera() {
+    const video = el('scanVideo');
+    if (!video) return;
+    if (typeof jsQR === 'undefined') {
+      const hint = el('scanHint');
+      if (hint) hint.textContent = '扫码组件加载失败，请联网后重试';
+      return;
+    }
+    try {
+      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = scanStream;
+      await video.play();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const tick = () => {
+        if (!scanStream) return;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(img.data, img.width, img.height);
+          if (code && code.data) {
+            stopScanCamera();
+            onQrDecoded(code.data);
+            return;
+          }
+        }
+        scanTimer = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (e) {
+      const hint = el('scanHint');
+      if (hint) hint.textContent = '无法打开摄像头：' + (e && e.message ? e.message : e);
+    }
+  }
+
+  function stopScanCamera() {
+    if (scanTimer) { cancelAnimationFrame(scanTimer); scanTimer = null; }
+    if (scanStream) {
+      scanStream.getTracks().forEach(function (t) { t.stop(); });
+      scanStream = null;
+    }
+  }
+
+  function onQrDecoded(text) {
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    const box = el('scanResult');
+    if (!box) return;
+    if (!data || data.t !== 'carelink-profile') {
+      box.innerHTML = '<div class="card"><div class="card-title">⚠️ 无法识别</div><div class="card-desc">这不是 Carelink 急救二维码。</div></div>';
+      translateDOM(box);
+      return;
+    }
+    const rows = [
+      ['Name', data.name], ['Age', data.age], ['Blood type', data.blood],
+      ['Allergies', data.allergy], ['Conditions', (data.history || []).join(', ')],
+      ['Medications', data.meds], ['Emergency number', data.emergencyPhone],
+      ['Guardian', data.guardianPhone]
+    ].filter(function (r) { return r[1]; });
+
+    box.innerHTML = `
+      <div class="card" style="border-left:4px solid #dc2626;">
+        <div class="card-title">🆘 ${data.name || 'Patient'}</div>
+        ${rows.map(function (r) {
+          return '<div class="list-item"><div class="list-content"><div class="list-title">' + r[0] +
+                 '</div><div class="list-sub">' + String(r[1]) + '</div></div></div>';
+        }).join('')}
+      </div>
+    `;
+    translateDOM(box);
+  }
   function renderHospitalQuery() {
     return `
       <div class="card">
@@ -2274,6 +2396,7 @@
   window.ensurePermissions = ensurePermissions;
   window.testDialEmergency = testDialEmergency;
   window.testSpeak = testSpeak;
+  window.showMyQr = showMyQr;
   window.setProfileLanguage = setProfileLanguage;
   window.openSystemSettings = openSystemSettings;
   window.showPairCode = showPairCode;
@@ -2292,6 +2415,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js" defer></script>
 <script src="firebase-sos.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="carelink-native.js"></script>
 </body>
 </html>
