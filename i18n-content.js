@@ -337,4 +337,27 @@
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, scanFix[lang]);
   });
+  var qrFix = {
+    en: {
+      '我的急救二维码': 'My emergency QR code',
+      '下面是根据您填写的急救资料生成的二维码，医院端扫一扫即可读取。': 'This QR code is generated from your emergency profile. The hospital can scan it to read your data.',
+      '生成 / 刷新二维码': 'Generate / refresh QR',
+      '资料含姓名、年龄、血型、过敏史、基础病、急救电话': 'Includes name, age, blood type, allergies, conditions, emergency number'
+    },
+    pt: {
+      '我的急救二维码': 'O meu código QR de emergência',
+      '下面是根据您填写的急救资料生成的二维码，医院端扫一扫即可读取。': 'Este código QR é gerado a partir da sua ficha de emergência.',
+      '生成 / 刷新二维码': 'Gerar / atualizar QR',
+      '资料含姓名、年龄、血型、过敏史、基础病、急救电话': 'Inclui nome, idade, grupo sanguíneo, alergias, doenças, número de emergência'
+    },
+    yue: {
+      '我的急救二维码': '我嘅急救二維碼',
+      '下面是根据您填写的急救资料生成的二维码，医院端扫一扫即可读取。': '呢個二維碼係用你填嘅急救資料生成，醫院端掃一掃就讀到。',
+      '生成 / 刷新二维码': '產生 / 更新二維碼',
+      '资料含姓名、年龄、血型、过敏史、基础病、急救电话': '包括姓名、年齡、血型、敏感史、基礎病、急救電話'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, qrFix[lang]);
+  });
 })();
