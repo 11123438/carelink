@@ -1021,9 +1021,7 @@
   function selectLanguage(lang) {
     state.language = (lang === 'auto') ? detectLanguage() : lang;
     try { localStorage.setItem('carelink.lang.v2', lang); } catch (e) {}
-    setTimeout(() => { showScreen('screenLanguage');
-    translateDOM(document.body);
-    markLanguageSelection(); }, 200);
+    setTimeout(function () { showScreen('screenRole'); translateDOM(document.body); }, 200);
   }
 
   function selectRole(role) {
