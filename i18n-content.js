@@ -19,6 +19,7 @@
       // 老人端
       '请将医院或监护人提供的二维码放入框内': 'Place the QR code from the hospital or guardian inside the frame',
       '打开扫码': 'Open scanner',
+      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder''s emergency QR code.',
       '最近授权记录': 'Recent authorizations',
       '有效期 24 小时': 'Valid for 24 hours',
       '有效期 7 天': 'Valid for 7 days',
