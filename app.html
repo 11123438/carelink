@@ -1563,25 +1563,32 @@
 
   async function startNativeScan() {
     const hint = el('scanHint');
-    if (window.CarelinkNative && CarelinkNative.available() && CarelinkNative.scanQrCode) {
+    var plugin = null;
+    try {
+      if (window.Capacitor && Capacitor.Plugins) plugin = Capacitor.Plugins.CustomNativePlugin;
+    } catch (e) {}
+
+    if (plugin && typeof plugin.scanQrCode === 'function') {
       try {
         if (hint) hint.textContent = '正在打开相机…';
-        const res = await CarelinkNative.scanQrCode();
+        var res = await plugin.scanQrCode();
         if (res && res.text) {
           if (hint) hint.textContent = '';
           onQrDecoded(res.text);
         } else if (hint) {
-          hint.textContent = '没有识别到二维码';
+          hint.textContent = '没有识别到二维码，请重试';
         }
       } catch (e) {
-        if (hint) hint.textContent = '已取消或无法打开相机';
+        if (hint) hint.textContent = '扫码失败：' + (e && e.message ? e.message : e);
       }
       return;
     }
-    // 浏览器环境：退回到 WebView 摄像头
-    renderCameraFallback();
-  }
 
+    if (hint) {
+      hint.textContent = '原生扫码不可用（Capacitor=' + (!!window.Capacitor) +
+        '，插件=' + (!!plugin) + '，方法=' + (plugin ? typeof plugin.scanQrCode : 'null') + '）';
+    }
+  }
   function renderCameraFallback() {
     const box = el('scanResult');
     if (!box) return;
