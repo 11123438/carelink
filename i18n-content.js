@@ -19,7 +19,7 @@
       // 老人端
       '请将医院或监护人提供的二维码放入框内': 'Place the QR code from the hospital or guardian inside the frame',
       '打开扫码': 'Open scanner',
-      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder\'s emergency QR code.',
+      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder''s emergency QR code.',
       '最近授权记录': 'Recent authorizations',
       '有效期 24 小时': 'Valid for 24 hours',
       '有效期 7 天': 'Valid for 7 days',
@@ -360,34 +360,5 @@
   };
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, qrFix[lang]);
-  });
-  var scanMore = {
-    en: {
-      '浏览器环境请使用手机相机扫描二维码内容。': 'In a browser, please use your phone camera to scan the code.',
-      '正在打开相机…': 'Opening camera…',
-      '没有识别到二维码，请重试': 'No QR code detected, please try again',
-      '识别成功': 'Code detected',
-      '正在识别…请让二维码占满画面并保持稳定': 'Scanning… keep the QR code filling the frame',
-      '结果区域不存在，请返回再进入': 'Result area missing, please go back and re-enter'
-    },
-    pt: {
-      '浏览器环境请使用手机相机扫描二维码内容。': 'No navegador, use a câmara do telemóvel para ler o código.',
-      '正在打开相机…': 'A abrir a câmara…',
-      '没有识别到二维码，请重试': 'Nenhum código detetado, tente novamente',
-      '识别成功': 'Código detetado',
-      '正在识别…请让二维码占满画面并保持稳定': 'A ler… mantenha o código no ecrã',
-      '结果区域不存在，请返回再进入': 'Área de resultado indisponível'
-    },
-    yue: {
-      '浏览器环境请使用手机相机扫描二维码内容。': '喺瀏覽器就用電話相機掃個碼。',
-      '正在打开相机…': '正在開鏡頭…',
-      '没有识别到二维码，请重试': '認唔到二維碼，再試一次',
-      '识别成功': '認到喇',
-      '正在识别…请让二维码占满画面并保持稳定': '正在識別…請將二維碼擺滿畫面',
-      '结果区域不存在，请返回再进入': '結果區域唔見咗，返上一頁再入'
-    }
-  };
-  ['en','yue','pt'].forEach(function (lang) {
-    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, scanMore[lang]);
   });
 })();
