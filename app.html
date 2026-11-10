@@ -1576,7 +1576,7 @@
           if (hint) hint.textContent = '';
           onQrDecoded(res.text);
         } else if (hint) {
-          hint.textContent = '扫码返回为空（hasData=' + (res && res.hasData) + '）';
+          hint.textContent = '没有识别到二维码，请重试';
         }
       } catch (e) {
         if (hint) hint.textContent = '扫码失败：' + (e && e.message ? e.message : e);
