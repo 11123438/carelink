@@ -298,4 +298,43 @@
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, profileFix[lang]);
   });
+  var scanFix = {
+    en: {
+      '扫描老人急救码': 'Scan elder emergency code',
+      '把老人端的「急救二维码」对准摄像头，即可读取其急救资料。': "Point the camera at the elder's emergency QR code to read their profile.",
+      '正在打开摄像头…': 'Opening camera…',
+      '扫码组件加载失败，请联网后重试': 'Scanner failed to load. Please check your connection.',
+      '无法识别': 'Not recognised',
+      '这不是 Carelink 急救二维码。': 'This is not a Carelink emergency QR code.',
+      '急救二维码': 'Emergency QR code',
+      '让医院端扫一扫，直接读取您的急救资料。': 'Let the hospital scan this to read your emergency profile.',
+      '生成二维码': 'Generate QR code',
+      '无法打开摄像头': 'Cannot open camera'
+    },
+    pt: {
+      '扫描老人急救码': 'Digitalizar código do idoso',
+      '把老人端的「急救二维码」对准摄像头，即可读取其急救资料。': 'Aponte a câmara para o código QR de emergência do idoso.',
+      '正在打开摄像头…': 'A abrir a câmara…',
+      '扫码组件加载失败，请联网后重试': 'Falha ao carregar o leitor.',
+      '无法识别': 'Não reconhecido',
+      '这不是 Carelink 急救二维码。': 'Não é um código QR do Carelink.',
+      '急救二维码': 'Código QR de emergência',
+      '让医院端扫一扫，直接读取您的急救资料。': 'Peça ao hospital para digitalizar este código.',
+      '生成二维码': 'Gerar código QR'
+    },
+    yue: {
+      '扫描老人急救码': '掃長者急救碼',
+      '把老人端的「急救二维码」对准摄像头，即可读取其急救资料。': '將長者端嘅急救二維碼對住鏡頭，就讀到佢嘅資料。',
+      '正在打开摄像头…': '正在開鏡頭…',
+      '扫码组件加载失败，请联网后重试': '掃碼組件載入失敗，請聯網再試',
+      '无法识别': '認唔到',
+      '这不是 Carelink 急救二维码。': '呢個唔係 Carelink 急救二維碼。',
+      '急救二维码': '急救二維碼',
+      '让医院端扫一扫，直接读取您的急救资料。': '俾醫院端掃一掃，直接讀你嘅急救資料。',
+      '生成二维码': '產生二維碼'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, scanFix[lang]);
+  });
 })();
