@@ -196,4 +196,42 @@
   ['en', 'yue', 'pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, extra[lang]);
   });
+  var more = {
+    en: {
+      '急救时最需要被知道的信息': 'What responders need to know',
+      '保存在本机，离线也能查看。点击 SOS 求助时，血型、过敏史与病史会随位置一并展示给急救人员和紧急联系人。':
+        'Stored on this device and available offline. When you press SOS, blood type, allergies and conditions are shared together with your location to responders and emergency contacts.',
+      '急救档案已保存到本机': 'Emergency profile saved on this device',
+      '请先填写姓名': 'Please enter a name',
+      '已停止自动流程，监护人通知与求助记录仍保留': 'Automation stopped. Guardian notification and record are kept.',
+      '已取消紧急求助': 'SOS cancelled',
+      '已停止循环播放，求助结束': 'Loop stopped, SOS ended',
+      '检测到未结束的求助，已恢复 SOS 界面': 'Unfinished SOS detected, screen restored'
+    },
+    pt: {
+      '急救时最需要被知道的信息': 'O que os socorristas precisam saber',
+      '保存在本机，离线也能查看。点击 SOS 求助时，血型、过敏史与病史会随位置一并展示给急救人员和紧急联系人。':
+        'Guardado neste dispositivo e disponível offline. Ao premir SOS, o grupo sanguíneo, as alergias e as doenças são partilhados com a localização.',
+      '急救档案已保存到本机': 'Ficha de emergência guardada',
+      '请先填写姓名': 'Introduza o nome',
+      '已停止自动流程，监护人通知与求助记录仍保留': 'Automação parada. Notificação e registo mantidos.',
+      '已取消紧急求助': 'SOS cancelado',
+      '已停止循环播放，求助结束': 'Repetição parada, SOS terminado',
+      '检测到未结束的求助，已恢复 SOS 界面': 'SOS por terminar detetado, ecrã restaurado'
+    },
+    yue: {
+      '急救时最需要被知道的信息': '急救時最需要俾人知嘅資料',
+      '保存在本机，离线也能查看。点击 SOS 求助时，血型、过敏史与病史会随位置一并展示给急救人员和紧急联系人。':
+        '存喺部機，離線都睇到。撳 SOS 時，血型、敏感史同病史會連位置一齊俾救護人員同緊急聯絡人睇。',
+      '急救档案已保存到本机': '急救檔案已儲存',
+      '请先填写姓名': '請先填姓名',
+      '已停止自动流程，监护人通知与求助记录仍保留': '已停止自動流程，通知同紀錄照留',
+      '已取消紧急求助': '已取消緊急求助',
+      '已停止循环播放，求助结束': '已停止循環播放',
+      '检测到未结束的求助，已恢复 SOS 界面': '偵測到未完成嘅求助，已還原 SOS 畫面'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, more[lang]);
+  });
 })();
