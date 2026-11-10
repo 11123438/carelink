@@ -953,12 +953,7 @@
   function tr(text) {
     const dict = currentPhrases();
     if (!dict || !text) return text;
-    const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
-    let out = text;
-    for (let i = 0; i < keys.length; i++) {
-      if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
-    }
-    return out;
+    return dict[String(text).trim()] || text;
   }
   function translateDOM(root) {
     const dict = currentPhrases();
@@ -971,23 +966,21 @@
     while ((n = walker.nextNode())) nodes.push(n);
 
     nodes.forEach(node => {
-      let text = node.nodeValue;
-      if (!text || !/[\u4e00-\u9fff]/.test(text)) return;
-      let out = text;
-      for (let i = 0; i < keys.length; i++) {
-        if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
-      }
-      if (out !== text) node.nodeValue = out;
+      const raw = node.nodeValue;
+      if (!raw) return;
+      const key = raw.trim();
+      if (!key) return;
+      if (dict[key]) { node.nodeValue = raw.replace(key, dict[key]); return; }
+      // 处理 "🆘 标题" 这种带符号前缀的情况
+      const m = key.match(/^([^\u4e00-\u9fff]*)([\u4e00-\u9fff][\s\S]*)$/);
+      if (m && dict[m[2]]) node.nodeValue = raw.replace(m[2], dict[m[2]]);
     });
 
     root.querySelectorAll('[placeholder]').forEach(el => {
-      let ph = el.getAttribute('placeholder');
+      const ph = el.getAttribute('placeholder');
       if (!ph) return;
-      let out = ph;
-      for (let i = 0; i < keys.length; i++) {
-        if (out.indexOf(keys[i]) >= 0) out = out.split(keys[i]).join(dict[keys[i]]);
-      }
-      if (out !== ph) el.setAttribute('placeholder', out);
+      const key = ph.trim();
+      if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
   }
 
