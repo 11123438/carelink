@@ -234,4 +234,68 @@
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, more[lang]);
   });
+  var profileFix = {
+    en: {
+      '测试播报 / Test voice': 'Test voice',
+      '当前语言': 'Current language',
+      '电话、短信、定位、通知': 'Phone, SMS, location, notifications',
+      '缺哪项补哪项，SOS 才能完整工作。': 'Fill in whatever is missing so SOS works fully.',
+      '生成 6 位配对码，告诉家人。对方在监护人端输入后，您的 SOS 会同时推送到对方手机并全屏告警。':
+        'Generate a 6-digit code and tell your family. Once they enter it in the guardian app, your SOS is also pushed to their phone with a full-screen alert.',
+      '输入老人端显示的 6 位配对码，绑定后即可收到 SOS 全屏提醒。':
+        'Enter the 6-digit code shown on the elder device to receive full-screen SOS alerts.',
+      '演示环境：切换身份需重新验证手机号': 'Demo: switching role requires phone verification',
+      '未填写病史': 'No conditions recorded',
+      '编辑': 'Edit',
+      '当前身份：': 'Role: ',
+      '语言': 'Language',
+      '跟随系统': 'Follow system',
+      '简体中文': 'Chinese (Simplified)',
+      '版本 v1.9.0': 'Version v1.9.0',
+      '点击“访问官网”即可跳转至医院官方网站（演示：广东省人民医院）':
+        'Tap "Visit site" to open the hospital website (demo: Guangdong Provincial People\'s Hospital)',
+      '扫码授权、紧急联系人': 'QR authorization, emergency contacts',
+      '授权状态、就医轨迹': 'Authorizations, care history',
+      '查询记录、上传记录': 'Patient lookup, upload records'
+    },
+    pt: {
+      '测试播报 / Test voice': 'Testar voz',
+      '当前语言': 'Idioma atual',
+      '电话、短信、定位、通知': 'Telefone, SMS, localização, notificações',
+      '缺哪项补哪项，SOS 才能完整工作。': 'Ative o que falta para o SOS funcionar.',
+      '生成 6 位配对码，告诉家人。对方在监护人端输入后，您的 SOS 会同时推送到对方手机并全屏告警。':
+        'Gere um código de 6 dígitos e diga à família. Depois de introduzido, o SOS é enviado para o telemóvel do cuidador.',
+      '输入老人端显示的 6 位配对码，绑定后即可收到 SOS 全屏提醒。':
+        'Introduza o código de 6 dígitos do dispositivo do idoso.',
+      '演示环境：切换身份需重新验证手机号': 'Demo: mudar de perfil exige verificação',
+      '未填写病史': 'Sem doenças registadas',
+      '编辑': 'Editar',
+      '当前身份：': 'Perfil: ',
+      '语言': 'Idioma',
+      '跟随系统': 'Seguir sistema',
+      '简体中文': 'Chinês (simplificado)',
+      '版本 v1.9.0': 'Versão v1.9.0'
+    },
+    yue: {
+      '测试播报 / Test voice': '測試播報',
+      '当前语言': '當前語言',
+      '电话、短信、定位、通知': '電話、短訊、定位、通知',
+      '缺哪项补哪项，SOS 才能完整工作。': '缺邊樣補邊樣，SOS 先會完整。',
+      '生成 6 位配对码，告诉家人。对方在监护人端输入后，您的 SOS 会同时推送到对方手机并全屏告警。':
+        '產生 6 位配對碼話俾屋企人知，佢喺監護人端輸入之後，你嘅 SOS 會推去佢部機。',
+      '输入老人端显示的 6 位配对码，绑定后即可收到 SOS 全屏提醒。':
+        '輸入長者端顯示嘅 6 位配對碼，綁定後就收到 SOS。',
+      '演示环境：切换身份需重新验证手机号': '示範環境：切換身份要重新驗證',
+      '未填写病史': '未填病史',
+      '编辑': '編輯',
+      '当前身份：': '當前身份：',
+      '语言': '語言',
+      '跟随系统': '跟隨系統',
+      '简体中文': '中文（簡體）',
+      '版本 v1.9.0': '版本 v1.9.0'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, profileFix[lang]);
+  });
 })();
