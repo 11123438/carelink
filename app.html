@@ -1395,11 +1395,11 @@
     const box = el('qrBoxMain');
     if (!box) return;
     box.innerHTML = '';
-    if (typeof QRCode === 'undefined') {
+    if (typeof qrcode === 'undefined') {
       box.innerHTML = '<div style="font-size:12px;color:#dc2626;">二维码组件加载失败，请联网后重试</div>';
       return;
     }
-    new QRCode(box, { text: qrPayload(), width: 210, height: 210, correctLevel: QRCode.CorrectLevel.M });
+    box.innerHTML = buildQrSvg(qrPayload(), 5);
   }
   function renderElderScan() {
     return `
@@ -1514,28 +1514,40 @@
   /* ===== 急救二维码：老人出示 / 医院扫描 ===== */
   let scanStream = null, scanTimer = null;
 
+  function buildQrSvg(text, cell) {
+    try {
+      var qr = qrcode(0, 'L');
+      qr.addData(text);
+      qr.make();
+      return qr.createSvgTag({ cellSize: cell || 4, margin: 4 });
+    } catch (e) {
+      return '<div style="font-size:12px;color:#dc2626;">二维码生成失败：' + (e && e.message ? e.message : e) + '</div>';
+    }
+  }
   function qrPayload() {
     const p = emergencyProfile;
+    const hist = (Array.isArray(p.history) ? p.history : []).join('|').slice(0, 60);
     return JSON.stringify({
-      t: 'carelink-profile',
-      name: p.name, age: p.age, blood: p.blood,
-      nameEn: p.nameEn, allergyEn: p.allergyEn, historyEn: p.historyEn,
-      allergy: p.drugAllergy, food: p.foodAllergy,
-      history: Array.isArray(p.history) ? p.history : [],
-      meds: p.meds, emergencyPhone: p.emergencyPhone,
-      guardianPhone: p.guardianPhone
+      t: 'ck',
+      n: String(p.name || '').slice(0, 20),
+      a: String(p.age || '').slice(0, 3),
+      b: String(p.blood || ''),
+      al: String(p.drugAllergy || '').slice(0, 30),
+      h: hist,
+      m: String(p.meds || '').replace(/\n/g, ' ').slice(0, 40),
+      e: String(p.emergencyPhone || ''),
+      g: String(p.guardianPhone || '')
     });
   }
-
   function showMyQr() {
     const box = el('qrBox');
     if (!box) return;
     box.innerHTML = '';
-    if (typeof QRCode === 'undefined') {
+    if (typeof qrcode === 'undefined') {
       box.innerHTML = '<div style="font-size:12px;color:#dc2626;">二维码组件加载失败，请联网后重试</div>';
       return;
     }
-    new QRCode(box, { text: qrPayload(), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+    box.innerHTML = buildQrSvg(qrPayload(), 5);
   }
 
   function renderScanner() {
@@ -1608,16 +1620,16 @@
     try { data = JSON.parse(text); } catch (e) { data = null; }
     const box = el('scanResult');
     if (!box) return;
-    if (!data || data.t !== 'carelink-profile') {
+    if (!data || (data.t !== 'ck' && data.t !== 'carelink-profile')) {
       box.innerHTML = '<div class="card"><div class="card-title">⚠️ 无法识别</div><div class="card-desc">这不是 Carelink 急救二维码。</div></div>';
       translateDOM(box);
       return;
     }
     const rows = [
-      ['Name', data.name], ['Age', data.age], ['Blood type', data.blood],
-      ['Allergies', data.allergy], ['Conditions', (data.history || []).join(', ')],
-      ['Medications', data.meds], ['Emergency number', data.emergencyPhone],
-      ['Guardian', data.guardianPhone]
+      ['Name', data.n || data.name], ['Age', data.a || data.age], ['Blood type', data.b || data.blood],
+      ['Allergies', data.al || data.allergy], ['Conditions', String(data.h || '').split('|').join(', ')],
+      ['Medications', data.m || data.meds], ['Emergency number', data.e || data.emergencyPhone],
+      ['Guardian', data.g || data.guardianPhone]
     ].filter(function (r) { return r[1]; });
 
     box.innerHTML = `
@@ -2457,8 +2469,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js" defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js" defer></script>
 <script src="firebase-sos.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="qrcodegen.js"></script>
+<script src="jsqr.js"></script>
 <script src="carelink-native.js"></script>
 </body>
 </html>
