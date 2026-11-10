@@ -997,6 +997,18 @@
   }
 
   /** 按手机系统语言推测界面语言 */
+  /** 在语言页高亮当前语言 */
+  function markLanguageSelection() {
+    document.querySelectorAll('#screenLanguage .option-card').forEach(function (card) {
+      var oc = card.getAttribute('onclick') || '';
+      card.classList.remove('selected');
+      card.querySelectorAll('.check-icon').forEach(function (i) { i.style.opacity = '0'; });
+      if (oc.indexOf("'" + state.language + "'") >= 0) {
+        card.classList.add('selected');
+        card.querySelectorAll('.check-icon').forEach(function (i) { i.style.opacity = '1'; });
+      }
+    });
+  }
   function detectLanguage() {
     var l = (navigator.languages && navigator.languages[0]) || navigator.language || 'zh';
     var s = String(l).toLowerCase();
@@ -1009,7 +1021,9 @@
   function selectLanguage(lang) {
     state.language = (lang === 'auto') ? detectLanguage() : lang;
     try { localStorage.setItem('carelink.lang.v2', lang); } catch (e) {}
-    setTimeout(() => { showScreen('screenRole'); translateDOM(document.body); }, 200);
+    setTimeout(() => { showScreen('screenLanguage');
+    translateDOM(document.body);
+    markLanguageSelection(); }, 200);
   }
 
   function selectRole(role) {
@@ -1204,6 +1218,8 @@
       ` : ''}
       <div class="card">
         <div class="card-title">🌐 语言 / Language</div>
+        <div id="langStatus" style="font-size:12px;color:var(--text-secondary);margin-top:6px;">当前语言 / Language: ${state.language}</div>
+        <button class="btn btn-outline" style="margin-top:10px;padding:10px;" onclick="testSpeak()">🔊 测试播报 / Test voice</button>
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;">
           ${[
             { id: 'zh', label: '简体中文' },
@@ -2116,6 +2132,20 @@
     }
   });
 
+  /** 测试当前语言的 TTS 播报 */
+  function testSpeak() {
+    var sample = state.language === 'zh' ? '测试播报：这是 Carelink 急救应用。'
+      : state.language === 'yue' ? '測試播報：呢個係 Carelink 急救應用。'
+      : state.language === 'pt' ? 'Teste de voz: esta é a aplicação Carelink.'
+      : 'Voice test: this is the Carelink emergency app.';
+    if (window.CarelinkNative && CarelinkNative.available()) {
+      CarelinkNative.speakPatientInfo(sample, state.language)
+        .then(function (r) { showToast('播报语言：' + state.language + (r && r.spoken ? '（已发声）' : '')); })
+        .catch(function (e) { showToast('播报失败：' + (e && e.message ? e.message : e)); });
+    } else {
+      showToast('浏览器环境无 TTS，请装 Android 包测试');
+    }
+  }
   function openSystemSettings() {
     if (window.CarelinkNative && CarelinkNative.available()) {
       CarelinkNative.openAppSettings();
@@ -2211,7 +2241,9 @@
       else state.language = savedLang;
     } catch (e) {}
     loadEmergencyProfile();
-    showScreen('screenRole'); translateDOM(document.body);
+    showScreen('screenLanguage');
+    translateDOM(document.body);
+    markLanguageSelection();
     restoreSOS();
     document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
   })();
@@ -2250,6 +2282,7 @@
   window.stopAutoFlow = stopAutoFlow;
   window.ensurePermissions = ensurePermissions;
   window.testDialEmergency = testDialEmergency;
+  window.testSpeak = testSpeak;
   window.setProfileLanguage = setProfileLanguage;
   window.openSystemSettings = openSystemSettings;
   window.showPairCode = showPairCode;
