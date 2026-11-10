@@ -183,6 +183,11 @@
       });
     } else if (idx === 3) {
       var speakBody = (T && T.speech) ? T.speech() : speechText(p);
+      // 保底：非中文界面时剔除播报文本里的中文，避免中英混杂
+      var uiLang = (T && T.lang) ? T.lang() : 'zh';
+      if (uiLang !== 'zh' && uiLang !== 'yue') {
+        speakBody = String(speakBody).replace(/[\u4e00-\u9fff\uff00-\uffef]+/g, ' ').replace(/\s+/g, ' ').trim();
+      }
       var loopBody = (T && T.loop) ? T.loop() : loopText(p);
       var lang = (global.__carelinkText && global.__carelinkText.lang) ? global.__carelinkText.lang() : 'zh';
       CarelinkNative.speakPatientInfo(speakBody, lang);
