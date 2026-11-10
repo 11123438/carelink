@@ -238,6 +238,13 @@
     return Promise.resolve(p.getFcmToken());
   };
 
+  /** 打开原生扫码（医院端），返回 { text } */
+  CarelinkNative.scanQrCode = function () {
+    var p = plugin();
+    if (!p) return Promise.reject(new Error('no native'));
+    return Promise.resolve(p.scanQrCode());
+  };
+
   /** 申请相机权限（医院端扫码） */
   CarelinkNative.requestCameraPermission = function () {
     var p = plugin();
