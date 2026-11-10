@@ -238,6 +238,13 @@
     return Promise.resolve(p.getFcmToken());
   };
 
+  /** 申请相机权限（医院端扫码） */
+  CarelinkNative.requestCameraPermission = function () {
+    var p = plugin();
+    if (!p) return Promise.resolve({ granted: false, mode: 'noop' });
+    return Promise.resolve(p.requestCameraPermission());
+  };
+
   /** 取极光 registrationId（仅原生有效） */
   CarelinkNative.getPushToken = function () {
     var p = plugin();
