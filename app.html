@@ -1559,6 +1559,11 @@
         <div class="card-desc">点击下方按钮打开相机，对准老人端的「急救二维码」。</div>
         <button class="btn btn-primary" style="margin-top:14px;" onclick="startNativeScan()">打开扫码</button>
         <div id="scanHint" style="text-align:center;font-size:13px;color:var(--text-secondary);margin-top:12px;"></div>
+        <div style="margin-top:16px;border-top:1px solid #eef1f6;padding-top:14px;">
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">扫不出来时，可粘贴二维码内容手动解析：</div>
+          <textarea class="form-textarea" id="manualCode" rows="3" placeholder='{"t":"ck","n":"..."}'></textarea>
+          <button class="btn btn-outline" style="margin-top:8px;padding:10px;" onclick="parseManualCode()">解析内容</button>
+        </div>
       </div>
       <div id="scanResult"></div>
     `;
@@ -1659,13 +1664,37 @@
     }
   }
 
+  /** 宽容解析：JSON / 双层 JSON / base64 / ck| 分隔 */
+  function parseQrPayload(text) {
+    if (!text) return null;
+    var s = String(text).trim();
+    try {
+      var o = JSON.parse(s);
+      if (o && (o.t === 'ck' || o.t === 'carelink-profile')) return o;
+    } catch (e) {}
+    try {
+      var dec = decodeURIComponent(escape(atob(s)));
+      var o2 = JSON.parse(dec);
+      if (o2 && (o2.t === 'ck' || o2.t === 'carelink-profile')) return o2;
+    } catch (e) {}
+    if (s.indexOf('ck|') === 0) {
+      var p = s.split('|');
+      return { t: 'ck', n: p[1], a: p[2], b: p[3], al: p[4], h: p[5], m: p[6], e: p[7], g: p[8] };
+    }
+    return null;
+  }
+
   function onQrDecoded(text) {
-    let data = null;
-    try { data = JSON.parse(text); } catch (e) { data = null; }
     const box = el('scanResult');
     if (!box) return;
-    if (!data || (data.t !== 'ck' && data.t !== 'carelink-profile')) {
-      box.innerHTML = '<div class="card"><div class="card-title">⚠️ 无法识别</div><div class="card-desc">这不是 Carelink 急救二维码。</div></div>';
+    var data = parseQrPayload(text);
+    if (!data) {
+      box.innerHTML =
+        '<div class="card" style="border-left:4px solid #f59e0b;">' +
+        '<div class="card-title">⚠️ 无法识别</div>' +
+        '<div class="card-desc">这不是 Carelink 急救二维码。扫到的内容：</div>' +
+        '<div style="font-size:12px;color:#374151;word-break:break-all;margin-top:8px;">' +
+        String(text).slice(0, 200) + '</div></div>';
       translateDOM(box);
       return;
     }
@@ -1678,7 +1707,7 @@
 
     box.innerHTML = `
       <div class="card" style="border-left:4px solid #dc2626;">
-        <div class="card-title">🆘 ${data.name || 'Patient'}</div>
+        <div class="card-title">🆘 ${data.n || data.name || 'Patient'}</div>
         ${rows.map(function (r) {
           return '<div class="list-item"><div class="list-content"><div class="list-title">' + r[0] +
                  '</div><div class="list-sub">' + String(r[1]) + '</div></div></div>';
@@ -1686,6 +1715,13 @@
       </div>
     `;
     translateDOM(box);
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function parseManualCode() {
+    var input = el('manualCode');
+    if (!input || !input.value.trim()) { showToast('请先粘贴二维码内容'); return; }
+    onQrDecoded(input.value.trim());
   }
   function renderHospitalQuery() {
     return `
