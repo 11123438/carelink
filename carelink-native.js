@@ -160,14 +160,7 @@
         CarelinkNative.sendSosSms(phone, smsBody).then(function (r) {
           if (r && r.sent && global.showToast) global.showToast('已发送求助短信给 ' + phone);
         }).catch(function (err) {
-          console.warn('[SMS] 直发失败，改用系统短信 App', err);
-          if (CarelinkNative.openSmsComposer) {
-            CarelinkNative.openSmsComposer(phone, smsBody).then(function () {
-              if (global.showToast) global.showToast('已打开短信 App，请点发送给 ' + phone);
-            }).catch(function () {
-              if (global.showToast) global.showToast('短信不可用：请到系统设置开启短信权限');
-            });
-          }
+          console.warn('[SMS] 发送失败', err);
           if (global.showToast) global.showToast('短信发送失败：' + (err && err.message ? err.message : err));
         });
       } else if (global.showToast) {
@@ -271,13 +264,6 @@
     var p = plugin();
     if (!p) return Promise.resolve(skipped('sendSosSms'));
     return Promise.resolve(p.sendSosSms({ phoneNumber: String(phoneNumber || ''), text: String(text || '') }));
-  };
-
-  /** 不需要短信权限：打开系统短信 App 并预填内容 */
-  CarelinkNative.openSmsComposer = function (phone, text) {
-    var p = plugin();
-    if (!p || !p.openSmsComposer) return Promise.resolve({ opened: false });
-    return Promise.resolve(p.openSmsComposer({ phoneNumber: String(phone || ''), text: String(text || '') }));
   };
 
   /** 一次性申请电话/短信/定位/通知权限（系统会连续弹 4 次） */
