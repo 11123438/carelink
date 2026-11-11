@@ -497,7 +497,7 @@
     .agr-h3 { font-size:14px; font-weight:600; margin:14px 0 6px; color:#374151; }
     .agr-p { font-size:13.5px; line-height:1.85; color:#4b5563; margin-bottom:9px; }
     .agr-blank { border:none; border-bottom:1px solid #9ca3af; background:#f8fafc;
-                 font-size:13.5px; padding:1px 6px; min-width:56px; color:#111827; }
+                 font-size:13.5px; padding:1px 6px; min-width:26px; color:#111827; }
     .agr-blank:focus { outline:none; border-bottom-color:#2563eb; background:#eff6ff; }
     .agr-check { width:16px; height:16px; vertical-align:-2px; margin-right:4px; accent-color:#2563eb; }
   </style>
@@ -2234,12 +2234,13 @@
 
       let text = agrEsc(it.t);
       let b = 0, c = 0;
-      text = text.replace(/\{\{BLANK\}\}/g, function () {
+      text = text.replace(/\{\{B:(\d+)\}\}/g, function (m, len) {
         const key = i + ':' + (b++);
         const v = saved[key] || '';
-        return '<input class="agr-blank" data-key="' + key + '" value="' + agrEsc(v) + '">';
+        const w = Math.max(26, Math.min(180, Number(len) * 7.5));
+        return '<input class="agr-blank" style="width:' + w + 'px" data-key="' + key + '" value="' + agrEsc(v) + '">';
       });
-      text = text.replace(/\{\{CHECK\}\}/g, function () {
+      text = text.replace(/\{\{C\}\}/g, function () {
         const key = 'c' + i + ':' + (c++);
         return '<input type="checkbox" class="agr-check" data-key="' + key + '"' + (saved[key] ? ' checked' : '') + '>';
       });
