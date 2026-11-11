@@ -685,7 +685,6 @@
           <div class="form-label">急救电话</div>
           <input class="form-input" id="epEmergencyPhone" type="tel" inputmode="tel" placeholder="内地 120 / 澳门 999 / 香港 999" maxlength="20">
           <button class="btn btn-outline" style="margin-top:10px;padding:11px;" onclick="testDialEmergency()">测试拨号（验证号码是否正确）</button>
-          <button class="btn btn-outline" style="margin-top:10px;padding:11px;" onclick="testSmsSend()">测试短信（发给监护人）</button>
           <div class="form-hint">SOS 触发后「拨打急救电话」环节会拨打此号码；建议先用上面的按钮试一次。</div>
         </div>
         <div class="form-row">
@@ -987,9 +986,7 @@
 
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    var target = el(id);
-    if (target) target.classList.add('active');
-    translateDOM(document.body);
+    el(id).classList.add('active');
   }
 
   /** 按手机系统语言推测界面语言 */
@@ -1097,7 +1094,7 @@
     state.currentTab = 0;
     switchTab(0);
     if (state.role === 'guardian') registerGuardianToken();
-    requestAllPermissionsOnLogin();
+    ensurePermissions(true);
     showToast('登录成功，欢迎使用 Carelink');
   }
 
@@ -1559,11 +1556,6 @@
         <div class="card-desc">点击下方按钮打开相机，对准老人端的「急救二维码」。</div>
         <button class="btn btn-primary" style="margin-top:14px;" onclick="startNativeScan()">打开扫码</button>
         <div id="scanHint" style="text-align:center;font-size:13px;color:var(--text-secondary);margin-top:12px;"></div>
-        <div style="margin-top:16px;border-top:1px solid #eef1f6;padding-top:14px;">
-          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">扫不出来时，可粘贴二维码内容手动解析：</div>
-          <textarea class="form-textarea" id="manualCode" rows="3" placeholder='{"t":"ck","n":"..."}'></textarea>
-          <button class="btn btn-outline" style="margin-top:8px;padding:10px;" onclick="parseManualCode()">解析内容</button>
-        </div>
       </div>
       <div id="scanResult"></div>
     `;
@@ -1664,37 +1656,13 @@
     }
   }
 
-  /** 宽容解析：JSON / 双层 JSON / base64 / ck| 分隔 */
-  function parseQrPayload(text) {
-    if (!text) return null;
-    var s = String(text).trim();
-    try {
-      var o = JSON.parse(s);
-      if (o && (o.t === 'ck' || o.t === 'carelink-profile')) return o;
-    } catch (e) {}
-    try {
-      var dec = decodeURIComponent(escape(atob(s)));
-      var o2 = JSON.parse(dec);
-      if (o2 && (o2.t === 'ck' || o2.t === 'carelink-profile')) return o2;
-    } catch (e) {}
-    if (s.indexOf('ck|') === 0) {
-      var p = s.split('|');
-      return { t: 'ck', n: p[1], a: p[2], b: p[3], al: p[4], h: p[5], m: p[6], e: p[7], g: p[8] };
-    }
-    return null;
-  }
-
   function onQrDecoded(text) {
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
     const box = el('scanResult');
     if (!box) return;
-    var data = parseQrPayload(text);
-    if (!data) {
-      box.innerHTML =
-        '<div class="card" style="border-left:4px solid #f59e0b;">' +
-        '<div class="card-title">⚠️ 无法识别</div>' +
-        '<div class="card-desc">这不是 Carelink 急救二维码。扫到的内容：</div>' +
-        '<div style="font-size:12px;color:#374151;word-break:break-all;margin-top:8px;">' +
-        String(text).slice(0, 200) + '</div></div>';
+    if (!data || (data.t !== 'ck' && data.t !== 'carelink-profile')) {
+      box.innerHTML = '<div class="card"><div class="card-title">⚠️ 无法识别</div><div class="card-desc">这不是 Carelink 急救二维码。</div></div>';
       translateDOM(box);
       return;
     }
@@ -1707,7 +1675,7 @@
 
     box.innerHTML = `
       <div class="card" style="border-left:4px solid #dc2626;">
-        <div class="card-title">🆘 ${data.n || data.name || 'Patient'}</div>
+        <div class="card-title">🆘 ${data.name || 'Patient'}</div>
         ${rows.map(function (r) {
           return '<div class="list-item"><div class="list-content"><div class="list-title">' + r[0] +
                  '</div><div class="list-sub">' + String(r[1]) + '</div></div></div>';
@@ -1715,13 +1683,6 @@
       </div>
     `;
     translateDOM(box);
-    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function parseManualCode() {
-    var input = el('manualCode');
-    if (!input || !input.value.trim()) { showToast('请先粘贴二维码内容'); return; }
-    onQrDecoded(input.value.trim());
   }
   function renderHospitalQuery() {
     return `
@@ -1920,19 +1881,6 @@
   }
 
   /** 档案页「测试拨号」：立刻拨打输入框里的号码，并提示实际拨出的是什么 */
-  /** 发一条测试短信给监护人，显示真实结果/错误 */
-  function testSmsSend() {
-    const p = emergencyProfile;
-    const phone = p.guardianPhone || p.contactPhone || '';
-    if (!phone) { showToast('请先填写监护人手机号'); return; }
-    if (!window.CarelinkNative || !CarelinkNative.available()) {
-      showToast('浏览器环境无法发短信，请装 Android 包测试');
-      return;
-    }
-    CarelinkNative.sendSosSms(phone, '【Carelink 测试短信】这是一条测试消息，收到即表示短信通道正常。')
-      .then(r => showToast('已发送到 ' + (r && r.phoneNumber ? r.phoneNumber : phone) + (r && r.segments > 1 ? '（' + r.segments + ' 条）' : '')))
-      .catch(e => showToast('短信失败：' + (e && e.message ? e.message : e)));
-  }
   function testDialEmergency() {
     const v = (el('epEmergencyPhone').value || '').trim();
     if (!v) { showToast('请先填写急救电话'); return; }
@@ -2358,23 +2306,6 @@
    * 登录后、以及从系统设置返回时都会跑一遍；被「拒绝两次」的权限系统不再弹窗，
    * 此时引导用户去系统设置手动开。
    */
-  /** 登录后一次性申请电话、短信、定位、通知权限 */
-  function requestAllPermissionsOnLogin() {
-    if (!window.CarelinkNative || !CarelinkNative.available()) return;
-    var call = CarelinkNative.requestAllPermissions
-      ? CarelinkNative.requestAllPermissions()
-      : CarelinkNative.requestMissingPermissions();
-    Promise.resolve(call).then(function (st) {
-      if (!st) return;
-      var labels = { phone: '电话', sms: '短信', location: '定位', notifications: '通知' };
-      var missing = Object.keys(labels).filter(function (k) { return st[k] !== 'granted'; });
-      if (missing.length) {
-        showToast('仍缺：' + missing.map(function (k) { return labels[k]; }).join('、') + '，请到「我的 → 权限」开启');
-      } else {
-        showToast('电话 / 短信 / 定位 / 通知 已全部开启');
-      }
-    }).catch(function () { });
-  }
   async function ensurePermissions(silent) {
     if (!window.CarelinkNative || !CarelinkNative.available()) return;
     try {
@@ -2404,7 +2335,7 @@
   /** 从系统设置返回应用时自动再查一次 */
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && state.loggedIn) {
-      requestAllPermissionsOnLogin();
+      ensurePermissions(true);
     }
   });
 
@@ -2558,7 +2489,6 @@
   window.stopAutoFlow = stopAutoFlow;
   window.ensurePermissions = ensurePermissions;
   window.testDialEmergency = testDialEmergency;
-  window.testSmsSend = testSmsSend;
   window.testSpeak = testSpeak;
   window.showMyQr = showMyQr;
   window.showMyQrMain = showMyQrMain;
