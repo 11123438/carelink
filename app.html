@@ -1003,6 +1003,20 @@
     });
   }
 
+  /* 全局错误提示（便于现场定位） */
+  window.addEventListener('error', function (e) {
+    try {
+      var box = document.getElementById('errBanner');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'errBanner';
+        box.style.cssText = 'position:fixed;z-index:99999;left:0;right:0;bottom:0;background:#7f1d1d;color:#fff;font-size:11px;padding:8px 10px;word-break:break-all;max-height:30%;overflow:auto;';
+        box.onclick = function () { box.remove(); };
+        document.body.appendChild(box);
+      }
+      box.textContent = 'ERR: ' + (e.message || 'script error') + ' @' + (e.lineno || '?');
+    } catch (err) {}
+  });
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     el(id).classList.add('active');
@@ -1150,7 +1164,15 @@
       hospital: [t('tabScanQr'), t('tabPatients'), t('tabUpload'), t('tabHospital'), t('tabProfile')]
     };
     appHeaderTitle.textContent = titles[state.role][idx] || '';
-    appContent.innerHTML = getContent(state.role, idx);
+    var _content = '';
+    try {
+      _content = getContent(state.role, idx);
+    } catch (err) {
+      _content = '<div class="card"><div class="card-title">⚠️ 页面加载失败</div>' +
+        '<div class="card-desc" style="word-break:break-all;">' + (err && err.message ? err.message : err) + '</div>' +
+        '<button class="btn btn-outline" style="margin-top:12px;" onclick="switchTab(0)">重试</button></div>';
+    }
+    appContent.innerHTML = _content;
     translateDOM(el('screenApp'));
     appContent.scrollTop = 0;
     stopScanCamera();
