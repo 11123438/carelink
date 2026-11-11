@@ -1017,6 +1017,26 @@
       box.textContent = 'ERR: ' + (e.message || 'script error') + ' @' + (e.lineno || '?');
     } catch (err) {}
   });
+  /* 运行时状态条：帮助现场定位卡住的原因 */
+  function updateDebugBar() {
+    try {
+      var bar = document.getElementById('debugBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'debugBar';
+        bar.style.cssText = 'position:fixed;z-index:99998;left:0;right:0;bottom:0;background:rgba(17,24,39,.92);color:#86efac;font-size:10px;padding:4px 8px;font-family:monospace;';
+        bar.onclick = function () { bar.style.display = 'none'; };
+        document.body.appendChild(bar);
+      }
+      var c = document.getElementById('appContent');
+      var tb = document.getElementById('appTabbar');
+      bar.textContent = 'role=' + state.role + ' tab=' + state.currentTab +
+        ' screen=' + ((document.querySelector('.screen.active') || {}).id || 'none') +
+        ' content=' + (c ? c.innerHTML.length : -1) +
+        ' tabs=' + (tb ? tb.children.length : -1) +
+        ' lang=' + state.language;
+    } catch (e) {}
+  }
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     el(id).classList.add('active');
@@ -1175,6 +1195,7 @@
     appContent.innerHTML = _content;
     translateDOM(el('screenApp'));
     appContent.scrollTop = 0;
+    updateDebugBar();
     stopScanCamera();
   }
 
