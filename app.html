@@ -490,6 +490,16 @@
       }
       .global-sos-btn { top: 70px; right: 30px; }
     }
+  
+    /* 协议页 */
+    .agr-h1 { font-size:17px; font-weight:700; margin:14px 0 10px; line-height:1.5; }
+    .agr-h2 { font-size:15px; font-weight:600; margin:16px 0 8px; color:#1f2937; }
+    .agr-h3 { font-size:14px; font-weight:600; margin:14px 0 6px; color:#374151; }
+    .agr-p { font-size:13.5px; line-height:1.85; color:#4b5563; margin-bottom:9px; }
+    .agr-blank { border:none; border-bottom:1px solid #9ca3af; background:#f8fafc;
+                 font-size:13.5px; padding:1px 6px; min-width:56px; color:#111827; }
+    .agr-blank:focus { outline:none; border-bottom-color:#2563eb; background:#eff6ff; }
+    .agr-check { width:16px; height:16px; vertical-align:-2px; margin-right:4px; accent-color:#2563eb; }
   </style>
 </head>
 <body>
@@ -582,7 +592,7 @@
       <div class="agree-row">
         <div class="checkbox" id="agreeBox" onclick="toggleAgree()"></div>
         <div>我已阅读并同意&nbsp;
-          <span class="protocol-link" onclick="openAgreement('user')">《用户协议》</span>&nbsp;和&nbsp;
+          <span class="protocol-link" onclick="openAgreementViewer()">《用户协议》</span>&nbsp;和&nbsp;
           <span class="protocol-link" onclick="openAgreement('privacy')">《隐私政策》</span>
         </div>
       </div>
@@ -612,6 +622,14 @@
   </div>
 
   <!-- ===== 急救档案编辑页（老人端 · 我的 → 急救档案） ===== -->
+  <div class="screen" id="screenAgreement">
+    <header class="app-header">
+      <button class="back-btn" onclick="closeAgreementViewer()">‹</button>
+      <div class="header-title" id="agreementTitle">协议</div>
+      <div class="header-right" style="width:34px;"></div>
+    </header>
+    <main class="app-content" id="agreementBody" style="padding-bottom:40px;"></main>
+  </div>
   <div class="screen" id="screenEmergency">
     <header class="app-header">
       <button class="back-btn" onclick="closeEmergencyProfile()" aria-label="返回">‹</button>
@@ -800,6 +818,7 @@
 
 <script src="i18n-ui.js"></script>
 <script src="i18n-content.js"></script>
+<script src="agreements.js"></script>
 <script>
   /* ============================================================
    * 协议内容（多语言）
@@ -1192,6 +1211,17 @@
           当前身份：${roleNames[state.role]}
         </div>
       </div>
+      <div class="card">
+        <div class="list-item" onclick="openAgreementViewer()">
+          <span class="list-icon">📄</span>
+          <div class="list-content">
+            <div class="list-title">${(window.AGREEMENTS && window.AGREEMENTS[state.language] ? window.AGREEMENTS[state.language][0].t : "跨境就医个人信息及健康医疗资料传输协议")}</div>
+            <div class="list-sub">点击查看、勾选并填写</div>
+          </div>
+          <span class="list-arrow">›</span>
+        </div>
+      </div>
+      
       <div class="card">
         <div class="card-title">🔄 切换身份</div>
         <div class="card-desc" style="margin-bottom: 16px;">演示环境：切换身份需重新验证手机号</div>
@@ -2122,10 +2152,25 @@
     return fill(st().brief, sosDisplayValues());
   }
 
+  /* 数字逐位朗读 */
+  const DIGIT_WORDS = {
+    en: ['zero','one','two','three','four','five','six','seven','eight','nine'],
+    pt: ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove']
+  };
+
+  function spellDigits(text, lang) {
+    const w = DIGIT_WORDS[lang];
+    if (!w) return text;
+    return String(text).replace(/\d+/g, function (m) {
+      return m.split('').map(function (d) { return w[Number(d)]; }).join(' ');
+    });
+  }
   function sosSpeechText() {
     const v = sosDisplayValues();
     v.addr = (state.sos && state.sos.loc && state.sos.loc.addr) || '';
-    return fill(st().speech, v);
+    var text = fill(st().speech, v);
+    if (state.language === 'en' || state.language === 'pt') text = spellDigits(text, state.language);
+    return text;
   }
 
   function sosLoopText() {
@@ -2143,6 +2188,75 @@
     return fill(st().smsTitle, {}) + '\n' + fill(st().smsBody, v);
   }
 
+  /* ===== 跨境协议查看器（四语言，可勾选、可填写、自动保存） ===== */
+  let agreementLang = 'zh';
+
+  function agrEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function loadAgreementState(lang) {
+    try { return JSON.parse(localStorage.getItem('carelink.agreement.' + lang) || '{}'); }
+    catch (e) { return {}; }
+  }
+
+  function saveAgreementState() {
+    const obj = {};
+    document.querySelectorAll('#agreementBody .agr-blank, #agreementBody .agr-check').forEach(function (inp) {
+      const k = inp.getAttribute('data-key');
+      if (!k) return;
+      obj[k] = inp.type === 'checkbox' ? inp.checked : inp.value;
+    });
+    try { localStorage.setItem('carelink.agreement.' + agreementLang, JSON.stringify(obj)); } catch (e) {}
+  }
+
+  function openAgreementViewer(lang) {
+    agreementLang = lang || state.language || 'zh';
+    const all = window.AGREEMENTS || {};
+    const items = all[agreementLang] || all.zh || [];
+    if (!items.length) { showToast('协议内容未加载'); return; }
+    el('agreementTitle').textContent = items[0].t;
+    renderAgreementBody(items);
+    showScreen('screenAgreement');
+    translateDOM(el('screenAgreement'));
+    el('agreementBody').scrollTop = 0;
+  }
+
+  function renderAgreementBody(items) {
+    const saved = loadAgreementState(agreementLang);
+    let html = '';
+    items.forEach(function (it, i) {
+      if (it.k === 'h1') { if (i === 0) return; html += '<div class="agr-h1">' + agrEsc(it.t) + '</div>'; return; }
+      if (it.k === 'h2') { html += '<div class="agr-h2">' + agrEsc(it.t) + '</div>'; return; }
+      if (it.k === 'h3') { html += '<div class="agr-h3">' + agrEsc(it.t) + '</div>'; return; }
+
+      let text = agrEsc(it.t);
+      let b = 0, c = 0;
+      text = text.replace(/\{\{BLANK\}\}/g, function () {
+        const key = i + ':' + (b++);
+        const v = saved[key] || '';
+        return '<input class="agr-blank" data-key="' + key + '" value="' + agrEsc(v) + '">';
+      });
+      text = text.replace(/\{\{CHECK\}\}/g, function () {
+        const key = 'c' + i + ':' + (c++);
+        return '<input type="checkbox" class="agr-check" data-key="' + key + '"' + (saved[key] ? ' checked' : '') + '>';
+      });
+      html += '<div class="agr-p">' + text + '</div>';
+    });
+    const body = el('agreementBody');
+    body.innerHTML = html;
+    body.querySelectorAll('.agr-blank, .agr-check').forEach(function (inp) {
+      inp.addEventListener('input', saveAgreementState);
+      inp.addEventListener('change', saveAgreementState);
+    });
+  }
+
+  function closeAgreementViewer() {
+    saveAgreementState();
+    showScreen('screenApp');
+  }
   function openSOS() {
     const startedAt = Date.now();
     state.sos = { active: true, startedAt: startedAt, loc: makeSOSLocation(), phaseIndex: -1 };
@@ -2529,6 +2643,8 @@
   window.stopAutoFlow = stopAutoFlow;
   window.ensurePermissions = ensurePermissions;
   window.testDialEmergency = testDialEmergency;
+  window.openAgreementViewer = openAgreementViewer;
+  window.closeAgreementViewer = closeAgreementViewer;
   window.testSpeak = testSpeak;
   window.showMyQr = showMyQr;
   window.showMyQrMain = showMyQrMain;
