@@ -987,7 +987,9 @@
 
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    el(id).classList.add('active');
+    var target = el(id);
+    if (target) target.classList.add('active');
+    translateDOM(document.body);
   }
 
   /** 按手机系统语言推测界面语言 */
@@ -1095,7 +1097,7 @@
     state.currentTab = 0;
     switchTab(0);
     if (state.role === 'guardian') registerGuardianToken();
-    ensurePermissions(true);
+    requestAllPermissionsOnLogin();
     showToast('登录成功，欢迎使用 Carelink');
   }
 
@@ -2320,6 +2322,23 @@
    * 登录后、以及从系统设置返回时都会跑一遍；被「拒绝两次」的权限系统不再弹窗，
    * 此时引导用户去系统设置手动开。
    */
+  /** 登录后一次性申请电话、短信、定位、通知权限 */
+  function requestAllPermissionsOnLogin() {
+    if (!window.CarelinkNative || !CarelinkNative.available()) return;
+    var call = CarelinkNative.requestAllPermissions
+      ? CarelinkNative.requestAllPermissions()
+      : CarelinkNative.requestMissingPermissions();
+    Promise.resolve(call).then(function (st) {
+      if (!st) return;
+      var labels = { phone: '电话', sms: '短信', location: '定位', notifications: '通知' };
+      var missing = Object.keys(labels).filter(function (k) { return st[k] !== 'granted'; });
+      if (missing.length) {
+        showToast('仍缺：' + missing.map(function (k) { return labels[k]; }).join('、') + '，请到「我的 → 权限」开启');
+      } else {
+        showToast('电话 / 短信 / 定位 / 通知 已全部开启');
+      }
+    }).catch(function () { });
+  }
   async function ensurePermissions(silent) {
     if (!window.CarelinkNative || !CarelinkNative.available()) return;
     try {
@@ -2349,7 +2368,7 @@
   /** 从系统设置返回应用时自动再查一次 */
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible' && state.loggedIn) {
-      ensurePermissions(true);
+      requestAllPermissionsOnLogin();
     }
   });
 
