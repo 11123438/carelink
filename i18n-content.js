@@ -19,7 +19,7 @@
       // 老人端
       '请将医院或监护人提供的二维码放入框内': 'Place the QR code from the hospital or guardian inside the frame',
       '打开扫码': 'Open scanner',
-      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder\'s emergency QR code.',
+      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder''s emergency QR code.',
       '最近授权记录': 'Recent authorizations',
       '有效期 24 小时': 'Valid for 24 hours',
       '有效期 7 天': 'Valid for 7 days',
@@ -360,58 +360,5 @@
   };
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, qrFix[lang]);
-  });
-  var loginFix = {
-    en: {
-      '登录账号': 'Sign in',
-      '请输入手机号': 'Phone number',
-      '请输入验证码': 'Verification code',
-      '获取验证码': 'Get code',
-      '我已阅读并同意': 'I have read and agree to the',
-      '《用户协议》': 'User Agreement',
-      '《隐私政策》': 'Privacy Policy',
-      '和': 'and',
-      '登 录': 'Sign in',
-      '演示环境：任意手机号 + 任意4位验证码即可登录': 'Demo: any phone number + any 4-digit code works',
-      '当前身份：': 'Role: ',
-      '老人端': 'Elder',
-      '监护人端': 'Guardian',
-      '医院端': 'Hospital'
-    },
-    pt: {
-      '登录账号': 'Entrar',
-      '请输入手机号': 'Número de telefone',
-      '请输入验证码': 'Código de verificação',
-      '获取验证码': 'Obter código',
-      '我已阅读并同意': 'Li e aceito o',
-      '《用户协议》': 'Termos de Utilização',
-      '《隐私政策》': 'Política de Privacidade',
-      '和': 'e',
-      '登 录': 'Entrar',
-      '演示环境：任意手机号 + 任意4位验证码即可登录': 'Demo: qualquer número + qualquer código de 4 dígitos',
-      '当前身份：': 'Perfil: ',
-      '老人端': 'Idoso',
-      '监护人端': 'Cuidador',
-      '医院端': 'Hospital'
-    },
-    yue: {
-      '登录账号': '登入帳號',
-      '请输入手机号': '入電話號碼',
-      '请输入验证码': '入驗證碼',
-      '获取验证码': '攞驗證碼',
-      '我已阅读并同意': '我已睇過並同意',
-      '《用户协议》': '《用戶協議》',
-      '《隐私政策》': '《私隱政策》',
-      '和': '同',
-      '登 录': '登入',
-      '演示环境：任意手机号 + 任意4位验证码即可登录': '示範：任何電話號碼 + 任何 4 位驗證碼都登入到',
-      '当前身份：': '當前身份：',
-      '老人端': '長者',
-      '监护人端': '監護人',
-      '医院端': '醫院'
-    }
-  };
-  ['en','yue','pt'].forEach(function (lang) {
-    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, loginFix[lang]);
   });
 })();
