@@ -19,7 +19,7 @@
       // 老人端
       '请将医院或监护人提供的二维码放入框内': 'Place the QR code from the hospital or guardian inside the frame',
       '打开扫码': 'Open scanner',
-      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder''s emergency QR code.',
+      '点击下方按钮打开相机，对准老人端的「急救二维码」。': 'Tap the button below to open the camera and aim at the elder\'s emergency QR code.',
       '最近授权记录': 'Recent authorizations',
       '有效期 24 小时': 'Valid for 24 hours',
       '有效期 7 天': 'Valid for 7 days',
@@ -360,5 +360,28 @@
   };
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, qrFix[lang]);
+  });
+  var manualFix = {
+    en: {
+      '扫不出来时，可粘贴二维码内容手动解析：': 'If scanning fails, paste the code content below to parse it:',
+      '解析内容': 'Parse content',
+      '请先粘贴二维码内容': 'Please paste the code content first',
+      '扫到的内容不是 Carelink 急救码，原文如下：': 'This is not a Carelink emergency code. Raw content:'
+    },
+    pt: {
+      '扫不出来时，可粘贴二维码内容手动解析：': 'Se a leitura falhar, cole o conteúdo do código:',
+      '解析内容': 'Analisar conteúdo',
+      '请先粘贴二维码内容': 'Cole primeiro o conteúdo',
+      '扫到的内容不是 Carelink 急救码，原文如下：': 'Não é um código Carelink. Conteúdo:'
+    },
+    yue: {
+      '扫不出来时，可粘贴二维码内容手动解析：': '掃唔到就將二維碼內容貼喺下面：',
+      '解析内容': '解析內容',
+      '请先粘贴二维码内容': '請先貼二維碼內容',
+      '扫到的内容不是 Carelink 急救码，原文如下：': '呢個唔係 Carelink 急救碼，原文：'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, manualFix[lang]);
   });
 })();
