@@ -685,6 +685,7 @@
           <div class="form-label">急救电话</div>
           <input class="form-input" id="epEmergencyPhone" type="tel" inputmode="tel" placeholder="内地 120 / 澳门 999 / 香港 999" maxlength="20">
           <button class="btn btn-outline" style="margin-top:10px;padding:11px;" onclick="testDialEmergency()">测试拨号（验证号码是否正确）</button>
+          <button class="btn btn-outline" style="margin-top:10px;padding:11px;" onclick="testSmsSend()">测试短信（发给监护人）</button>
           <div class="form-hint">SOS 触发后「拨打急救电话」环节会拨打此号码；建议先用上面的按钮试一次。</div>
         </div>
         <div class="form-row">
@@ -1881,6 +1882,19 @@
   }
 
   /** 档案页「测试拨号」：立刻拨打输入框里的号码，并提示实际拨出的是什么 */
+  /** 发一条测试短信给监护人，显示真实结果/错误 */
+  function testSmsSend() {
+    const p = emergencyProfile;
+    const phone = p.guardianPhone || p.contactPhone || '';
+    if (!phone) { showToast('请先填写监护人手机号'); return; }
+    if (!window.CarelinkNative || !CarelinkNative.available()) {
+      showToast('浏览器环境无法发短信，请装 Android 包测试');
+      return;
+    }
+    CarelinkNative.sendSosSms(phone, '【Carelink 测试短信】这是一条测试消息，收到即表示短信通道正常。')
+      .then(r => showToast('已发送到 ' + (r && r.phoneNumber ? r.phoneNumber : phone) + (r && r.segments > 1 ? '（' + r.segments + ' 条）' : '')))
+      .catch(e => showToast('短信失败：' + (e && e.message ? e.message : e)));
+  }
   function testDialEmergency() {
     const v = (el('epEmergencyPhone').value || '').trim();
     if (!v) { showToast('请先填写急救电话'); return; }
@@ -2489,6 +2503,7 @@
   window.stopAutoFlow = stopAutoFlow;
   window.ensurePermissions = ensurePermissions;
   window.testDialEmergency = testDialEmergency;
+  window.testSmsSend = testSmsSend;
   window.testSpeak = testSpeak;
   window.showMyQr = showMyQr;
   window.showMyQrMain = showMyQrMain;
