@@ -1610,7 +1610,10 @@
       h: hist,
       m: String(p.meds || '').replace(/\n/g, ' ').slice(0, 40),
       e: String(p.emergencyPhone || ''),
-      g: String(p.guardianPhone || '')
+      g: String(p.guardianPhone || ''),
+      ne: String(p.nameEn || '').slice(0, 20),
+      ae: String(p.allergyEn || '').slice(0, 30),
+      he: String(p.historyEn || '').slice(0, 60)
     };
     const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
     return 'https://11123438.github.io/carelink/#p=' + b64;
@@ -1783,30 +1786,39 @@
       translateDOM(box);
       return;
     }
+
+    var lang = state.language;
+    var L = {
+      zh:  { name: '姓名', age: '年龄', blood: '血型', alg: '过敏史', cond: '基础病', med: '用药', emg: '急救电话', guard: '监护人', title: '急救档案' },
+      yue: { name: '姓名', age: '年齡', blood: '血型', alg: '敏感史', cond: '基礎病', med: '食嘅藥', emg: '急救電話', guard: '監護人', title: '急救檔案' },
+      en:  { name: 'Name', age: 'Age', blood: 'Blood type', alg: 'Allergies', cond: 'Conditions', med: 'Medications', emg: 'Emergency', guard: 'Guardian', title: 'Emergency profile' },
+      pt:  { name: 'Nome', age: 'Idade', blood: 'Grupo sanguíneo', alg: 'Alergias', cond: 'Doenças', med: 'Medicação', emg: 'Emergência', guard: 'Cuidador', title: 'Ficha de emergência' }
+    }[lang] || null;
+    if (!L) L = { name: '姓名 Name', age: '年龄 Age', blood: '血型 Blood type', alg: '过敏史 Allergies', cond: '基础病 Conditions', med: '用药 Medications', emg: '急救电话 Emergency', guard: '监护人 Guardian', title: '急救档案' };
+
+    var latin = (lang === 'en' || lang === 'pt');
+    var name = latin && data.ne ? data.ne : (data.n || data.name || '');
+    var allergy = latin && data.ae ? data.ae : (data.al || data.allergy || '');
+    var conditions = latin && data.he ? data.he : String(data.h || '').split('|').join(', ');
+
     const rows = [
-      ['姓名 Name', data.n || data.name],
-      ['年龄 Age', data.a || data.age],
-      ['血型 Blood type', data.b || data.blood],
-      ['过敏史 Allergies', data.al || data.allergy],
-      ['基础病 Conditions', String(data.h || '').split('|').join(', ')],
-      ['用药 Medications', data.m || data.meds],
-      ['急救电话 Emergency', data.e || data.emergencyPhone],
-      ['监护人 Guardian', data.g || data.guardianPhone]
+      [L.name, name], [L.age, data.a || data.age], [L.blood, data.b || data.blood],
+      [L.alg, allergy], [L.cond, conditions],
+      [L.med, data.m || data.meds], [L.emg, data.e || data.emergencyPhone],
+      [L.guard, data.g || data.guardianPhone]
     ].filter(function (r) { return r[1]; });
 
     box.innerHTML = `
       <div class="card" style="border-left:4px solid #dc2626;">
-        <div class="card-title">🆘 ${data.n || data.name || 'Patient'} · 急救档案</div>
+        <div class="card-title">🆘 ${name || 'Patient'} · ${L.title}</div>
         ${rows.map(function (r) {
           return '<div class="list-item"><div class="list-content"><div class="list-title">' + r[0] +
                  '</div><div class="list-sub">' + String(r[1]) + '</div></div></div>';
         }).join('')}
       </div>
     `;
-    translateDOM(box);
     box.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-
   function parseManualCode() {
     var input = el('manualCode');
     if (!input || !input.value.trim()) { showToast('请先粘贴二维码内容'); return; }
