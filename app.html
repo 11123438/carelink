@@ -1601,7 +1601,7 @@
   function qrPayload() {
     const p = emergencyProfile;
     const hist = (Array.isArray(p.history) ? p.history : []).join('|').slice(0, 60);
-    return JSON.stringify({
+    const obj = {
       t: 'ck',
       n: String(p.name || '').slice(0, 20),
       a: String(p.age || '').slice(0, 3),
@@ -1611,7 +1611,9 @@
       m: String(p.meds || '').replace(/\n/g, ' ').slice(0, 40),
       e: String(p.emergencyPhone || ''),
       g: String(p.guardianPhone || '')
-    });
+    };
+    const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+    return 'https://11123438.github.io/carelink/#p=' + b64;
   }
   function showMyQr() {
     const box = el('qrBox');
@@ -1740,22 +1742,33 @@
   function parseQrPayload(text) {
     if (!text) return null;
     var s = String(text).trim();
+    // 1) 直接 JSON
     try {
       var o = JSON.parse(s);
       if (o && (o.t === 'ck' || o.t === 'carelink-profile')) return o;
     } catch (e) {}
+    // 2) 带参数 URL：...#p=base64
+    var mi = s.match(/[#?&]p=([A-Za-z0-9+/=_-]+)/);
+    if (mi) {
+      try {
+        var dec = decodeURIComponent(escape(atob(mi[1].replace(/-/g, '+').replace(/_/g, '/'))));
+        var o2 = JSON.parse(dec);
+        if (o2 && (o2.t === 'ck' || o2.t === 'carelink-profile')) return o2;
+      } catch (e) {}
+    }
+    // 3) 纯 base64
     try {
-      var dec = decodeURIComponent(escape(atob(s)));
-      var o2 = JSON.parse(dec);
-      if (o2 && (o2.t === 'ck' || o2.t === 'carelink-profile')) return o2;
+      var dec2 = decodeURIComponent(escape(atob(s)));
+      var o3 = JSON.parse(dec2);
+      if (o3 && (o3.t === 'ck' || o3.t === 'carelink-profile')) return o3;
     } catch (e) {}
+    // 4) ck| 分隔
     if (s.indexOf('ck|') === 0) {
       var p = s.split('|');
       return { t: 'ck', n: p[1], a: p[2], b: p[3], al: p[4], h: p[5], m: p[6], e: p[7], g: p[8] };
     }
     return null;
   }
-
   function onQrDecoded(text) {
     const box = el('scanResult');
     if (!box) return;
