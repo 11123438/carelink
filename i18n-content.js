@@ -384,4 +384,86 @@
   ['en','yue','pt'].forEach(function (lang) {
     window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, manualFix[lang]);
   });
+  var guardianFix = {
+    en: {
+      '查看内容：门诊病历、用药记录、检验报告': 'Scope: outpatient notes, medication records, lab reports',
+      '查看内容：全部就诊记录、用药提醒': 'Scope: all visit records, medication reminders',
+      '广东省人民医院 · 心血管内科': 'Guangdong Provincial People\'s Hospital · Cardiology',
+      '广东省人民医院 查看了用药记录': 'Guangdong Provincial People\'s Hospital viewed medication records',
+      '授权时间：2026-10-10 14': 'Authorized: 2026-10-10 14',
+      '授权时间：2026-10-15 09': 'Authorized: 2026-10-15 09',
+      '有效期至 2026-10-22': 'Valid until 2026-10-22',
+      '张先生 查看了检验报告': 'Mr. Cheung viewed lab reports',
+      '张先生（监护人）': 'Mr. Cheung (guardian)',
+      '长期有效': 'No expiry',
+      '地址已脱敏': 'Address masked',
+      '澳门镜湖医院 · 老年科': 'Kiang Wu Hospital · Geriatrics',
+      '高血压复诊': 'Hypertension follow-up',
+      '年度体检': 'Annual check-up',
+      '香港玛丽医院 · 体检中心': 'Queen Mary Hospital · Health Check Centre',
+      '药物调整': 'Medication adjustment',
+      '阿托伐他汀钙片未打卡': 'Atorvastatin not taken',
+      '高于近 7 天平均值，建议关注': 'Above the 7-day average, please monitor',
+      '收缩压 158mmHg': 'Systolic 158 mmHg',
+      '舒张压 96mmHg': 'Diastolic 96 mmHg',
+      '异常指标将通过短信和 App 推送通知监护人。': 'Abnormal readings are sent to the guardian by SMS and push.',
+      '用药提醒未确认': 'Medication reminder unconfirmed',
+      '血压异常波动': 'Abnormal blood pressure',
+      '提醒设置': 'Alert settings'
+    },
+    pt: {
+      '查看内容：门诊病历、用药记录、检验报告': 'Âmbito: notas de consulta, medicação, análises',
+      '查看内容：全部就诊记录、用药提醒': 'Âmbito: todos os registos, lembretes de medicação',
+      '广东省人民医院 · 心血管内科': 'Hospital Provincial de Guangdong · Cardiologia',
+      '广东省人民医院 查看了用药记录': 'Hospital Provincial de Guangdong viu a medicação',
+      '授权时间：2026-10-10 14': 'Autorizado: 2026-10-10 14',
+      '授权时间：2026-10-15 09': 'Autorizado: 2026-10-15 09',
+      '有效期至 2026-10-22': 'Válido até 2026-10-22',
+      '张先生 查看了检验报告': 'Sr. Cheung viu as análises',
+      '张先生（监护人）': 'Sr. Cheung (cuidador)',
+      '长期有效': 'Sem expiração',
+      '地址已脱敏': 'Endereço mascarado',
+      '澳门镜湖医院 · 老年科': 'Hospital Kiang Wu · Geriatria',
+      '高血压复诊': 'Consulta de hipertensão',
+      '年度体检': 'Exame anual',
+      '香港玛丽医院 · 体检中心': 'Queen Mary Hospital · Centro de exames',
+      '药物调整': 'Ajuste de medicação',
+      '阿托伐他汀钙片未打卡': 'Atorvastatina não tomada',
+      '高于近 7 天平均值，建议关注': 'Acima da média de 7 dias',
+      '收缩压 158mmHg': 'Sistólica 158 mmHg',
+      '舒张压 96mmHg': 'Diastólica 96 mmHg',
+      '异常指标将通过短信和 App 推送通知监护人。': 'Valores anormais são enviados ao cuidador por SMS e push.',
+      '用药提醒未确认': 'Lembrete de medicação não confirmado',
+      '血压异常波动': 'Tensão arterial anormal',
+      '提醒设置': 'Definições de alertas'
+    },
+    yue: {
+      '查看内容：门诊病历、用药记录、检验报告': '睇嘅範圍：門診病歷、食藥紀錄、檢驗報告',
+      '查看内容：全部就诊记录、用药提醒': '睇嘅範圍：全部就診紀錄、食藥提醒',
+      '广东省人民医院 查看了用药记录': '廣東省人民醫院睇過食藥紀錄',
+      '授权时间：2026-10-10 14': '授權時間：2026-10-10 14',
+      '授权时间：2026-10-15 09': '授權時間：2026-10-15 09',
+      '有效期至 2026-10-22': '有效至 2026-10-22',
+      '张先生 查看了检验报告': '張先生睇過檢驗報告',
+      '张先生（监护人）': '張先生（監護人）',
+      '长期有效': '長期有效',
+      '地址已脱敏': '地址已遮蔽',
+      '澳门镜湖医院 · 老年科': '澳門鏡湖醫院 · 老年科',
+      '高血压复诊': '高血壓覆診',
+      '年度体检': '年度體檢',
+      '香港玛丽医院 · 体检中心': '香港瑪麗醫院 · 體檢中心',
+      '药物调整': '藥物調整',
+      '阿托伐他汀钙片未打卡': '阿托伐他汀鈣片未食',
+      '高于近 7 天平均值，建议关注': '高過近 7 日平均，要留意',
+      '收缩压 158mmHg': '收縮壓 158mmHg',
+      '舒张压 96mmHg': '舒張壓 96mmHg',
+      '异常指标将通过短信和 App 推送通知监护人。': '異常指標會用短訊同 App 推送通知監護人。',
+      '用药提醒未确认': '食藥提醒未確認',
+      '血压异常波动': '血壓異常波動',
+      '提醒设置': '提醒設定'
+    }
+  };
+  ['en','yue','pt'].forEach(function (lang) {
+    window.UI_PHRASES[lang] = Object.assign({}, window.UI_PHRASES[lang] || {}, guardianFix[lang]);
+  });
 })();
