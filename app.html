@@ -628,7 +628,10 @@
       <div class="header-title" id="agreementTitle">协议</div>
       <div class="header-right" style="width:34px;"></div>
     </header>
-    <main class="app-content" id="agreementBody" style="padding-bottom:40px;"></main>
+    <main class="app-content" id="agreementBody" style="padding-bottom:110px;"></main>
+    <div style="position:fixed;left:0;right:0;bottom:0;padding:10px 16px 14px;background:#fff;border-top:1px solid #eef1f6;box-shadow:0 -4px 16px rgba(20,40,80,.06);">
+      <button class="btn btn-primary" onclick="closeAgreementViewer()">返回 / Back</button>
+    </div>
   </div>
   <div class="screen" id="screenEmergency">
     <header class="app-header">
@@ -2255,7 +2258,11 @@
     try { localStorage.setItem('carelink.agreement.' + agreementLang, JSON.stringify(obj)); } catch (e) {}
   }
 
+  let agreementReturn = 'screenApp';
+
   function openAgreementViewer(lang) {
+    var act = document.querySelector('.screen.active');
+    agreementReturn = act ? act.id : 'screenApp';
     agreementLang = lang || state.language || 'zh';
     const all = window.AGREEMENTS || {};
     const items = all[agreementLang] || all.zh || [];
@@ -2299,7 +2306,11 @@
 
   function closeAgreementViewer() {
     saveAgreementState();
-    showScreen('screenApp');
+    var back = agreementReturn || 'screenApp';
+    showScreen(back);
+    if (back === 'screenLogin') {
+      // 回到登录页时保持已填内容，不做额外处理
+    }
   }
   function openSOS() {
     const startedAt = Date.now();
